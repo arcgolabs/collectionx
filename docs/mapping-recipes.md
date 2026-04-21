@@ -19,7 +19,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/DaiYuANg/arcgo/collectionx/set"
+	"github.com/arcgolabs/collectionx/set"
 )
 
 func main() {
@@ -38,8 +38,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/DaiYuANg/arcgo/collectionx/mapping"
-	"github.com/DaiYuANg/arcgo/collectionx/set"
+	"github.com/arcgolabs/collectionx/mapping"
+	"github.com/arcgolabs/collectionx/set"
 )
 
 func main() {
@@ -64,7 +64,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/DaiYuANg/arcgo/collectionx/mapping"
+	"github.com/arcgolabs/collectionx/mapping"
 )
 
 func main() {
@@ -87,7 +87,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/DaiYuANg/arcgo/collectionx/mapping"
+	"github.com/arcgolabs/collectionx/mapping"
 )
 
 func main() {
@@ -114,7 +114,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/DaiYuANg/arcgo/collectionx/set"
+	"github.com/arcgolabs/collectionx/set"
 )
 
 func main() {

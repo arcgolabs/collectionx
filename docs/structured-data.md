@@ -19,7 +19,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/DaiYuANg/arcgo/collectionx/list"
+	"github.com/arcgolabs/collectionx/list"
 )
 
 func main() {
@@ -48,7 +48,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/DaiYuANg/arcgo/collectionx/interval"
+	"github.com/arcgolabs/collectionx/interval"
 )
 
 func main() {
@@ -73,7 +73,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/DaiYuANg/arcgo/collectionx/prefix"
+	"github.com/arcgolabs/collectionx/prefix"
 )
 
 func main() {
@@ -95,7 +95,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/DaiYuANg/arcgo/collectionx/tree"
+	"github.com/arcgolabs/collectionx/tree"
 )
 
 func main() {

@@ -10,12 +10,12 @@
 
 ## Package layout
 
-- `github.com/DaiYuANg/arcgo/collectionx/set` — `Set`, `ConcurrentSet`, `MultiSet`, `OrderedSet`
-- `github.com/DaiYuANg/arcgo/collectionx/mapping` — `Map`, `ConcurrentMap`, `BiMap`, `OrderedMap`, `MultiMap`, `Table`
-- `github.com/DaiYuANg/arcgo/collectionx/list` — `List`, `ConcurrentList`, `Deque`, `RingBuffer`, `PriorityQueue`
-- `github.com/DaiYuANg/arcgo/collectionx/interval` — `Range`, `RangeSet`, `RangeMap`
-- `github.com/DaiYuANg/arcgo/collectionx/prefix` — `Trie` / `PrefixMap`
-- `github.com/DaiYuANg/arcgo/collectionx/tree` — `Tree`, `ConcurrentTree`
+- `github.com/arcgolabs/collectionx/set` — `Set`, `ConcurrentSet`, `MultiSet`, `OrderedSet`
+- `github.com/arcgolabs/collectionx/mapping` — `Map`, `ConcurrentMap`, `BiMap`, `OrderedMap`, `MultiMap`, `Table`
+- `github.com/arcgolabs/collectionx/list` — `List`, `ConcurrentList`, `Deque`, `RingBuffer`, `PriorityQueue`
+- `github.com/arcgolabs/collectionx/interval` — `Range`, `RangeSet`, `RangeMap`
+- `github.com/arcgolabs/collectionx/prefix` — `Trie` / `PrefixMap`
+- `github.com/arcgolabs/collectionx/tree` — `Tree`, `ConcurrentTree`
 
 ## Documentation map
 
@@ -28,7 +28,7 @@
 ## Install / Import
 
 ```bash
-go get github.com/DaiYuANg/arcgo/collectionx@latest
+go get github.com/arcgolabs/collectionx@latest
 ```
 
 Import the **subpackage** you need (for example `collectionx/set`, `collectionx/mapping`).

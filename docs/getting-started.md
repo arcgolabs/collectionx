@@ -12,7 +12,7 @@ weight: 2
 ## 1) Install
 
 ```bash
-go get github.com/DaiYuANg/arcgo/collectionx@latest
+go get github.com/arcgolabs/collectionx@latest
 ```
 
 ## 2) Create `main.go`
@@ -23,8 +23,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/DaiYuANg/arcgo/collectionx/mapping"
-	"github.com/DaiYuANg/arcgo/collectionx/set"
+	"github.com/arcgolabs/collectionx/mapping"
+	"github.com/arcgolabs/collectionx/set"
 )
 
 func main() {
@@ -44,7 +44,7 @@ func main() {
 
 ```bash
 go mod init example.com/collectionx-hello
-go get github.com/DaiYuANg/arcgo/collectionx@latest
+go get github.com/arcgolabs/collectionx@latest
 go run .
 ```
 
