@@ -1,4 +1,4 @@
-module github.com/arcgolabs/collectionx
+module github.com/arcgolabs/collectionx/interval
 
 go 1.26.2
 

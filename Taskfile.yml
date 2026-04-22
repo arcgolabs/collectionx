@@ -2,12 +2,50 @@
 
 version: '3'
 
-vars:
-  GREETING: Hello, world!
-
 tasks:
   default:
-    desc: Print a greeting message
+    desc: Run the workspace test suite
     cmds:
-      - echo "{{.GREETING}}"
-    silent: true
+      - go test ./...
+
+  release:tag-all:
+    desc: Create root and nested-module tags for VERSION
+    requires:
+      vars: [VERSION]
+    cmds:
+      - git tag v{{.VERSION}}
+      - git tag examples/v{{.VERSION}}
+      - git tag internal/v{{.VERSION}}
+      - git tag interval/v{{.VERSION}}
+      - git tag list/v{{.VERSION}}
+      - git tag mapping/v{{.VERSION}}
+      - git tag prefix/v{{.VERSION}}
+      - git tag set/v{{.VERSION}}
+      - git tag tree/v{{.VERSION}}
+
+  release:push-all:
+    desc: Push root and nested-module tags for VERSION
+    requires:
+      vars: [VERSION]
+    cmds:
+      - git push origin v{{.VERSION}}
+      - git push origin examples/v{{.VERSION}}
+      - git push origin internal/v{{.VERSION}}
+      - git push origin interval/v{{.VERSION}}
+      - git push origin list/v{{.VERSION}}
+      - git push origin mapping/v{{.VERSION}}
+      - git push origin prefix/v{{.VERSION}}
+      - git push origin set/v{{.VERSION}}
+      - git push origin tree/v{{.VERSION}}
+
+  release:publish:
+    desc: Create and push root and nested-module tags for VERSION
+    requires:
+      vars: [VERSION]
+    cmds:
+      - task: release:tag-all
+        vars:
+          VERSION: "{{.VERSION}}"
+      - task: release:push-all
+        vars:
+          VERSION: "{{.VERSION}}"

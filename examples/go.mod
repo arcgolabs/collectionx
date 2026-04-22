@@ -1,3 +1,3 @@
-module github.com/DaiYuANg/arcgo/examples/collectionx
+module github.com/arcgolabs/collectionx/examples
 
 go 1.26.2
