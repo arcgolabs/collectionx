@@ -1,6 +1,6 @@
 package tree
 
-// Get returns node by id as a detached subtree clone.
+// Get returns node by id as a detached node clone with ancestor chain.
 func (t *ConcurrentTree[K, V]) Get(id K) (*Node[K, V], bool) {
 	if t == nil {
 		return nil, false
@@ -14,7 +14,7 @@ func (t *ConcurrentTree[K, V]) Get(id K) (*Node[K, V], bool) {
 	if !ok {
 		return nil, false
 	}
-	return cloneNodeWithAncestors(node), true
+	return cloneNodeWithAncestorsShallow(node), true
 }
 
 // Has reports whether id exists.
@@ -30,7 +30,7 @@ func (t *ConcurrentTree[K, V]) Has(id K) bool {
 	return t.tree.Has(id)
 }
 
-// Parent returns parent node by child id as a detached subtree clone.
+// Parent returns parent node by child id as a detached node clone with ancestor chain.
 func (t *ConcurrentTree[K, V]) Parent(id K) (*Node[K, V], bool) {
 	if t == nil {
 		return nil, false
@@ -44,7 +44,7 @@ func (t *ConcurrentTree[K, V]) Parent(id K) (*Node[K, V], bool) {
 	if !ok || node.parent == nil {
 		return nil, false
 	}
-	return cloneNodeWithAncestors(node.parent), true
+	return cloneNodeWithAncestorsShallow(node.parent), true
 }
 
 // Children returns children snapshot by node id.
@@ -181,12 +181,12 @@ func (t *ConcurrentTree[K, V]) IsEmpty() bool {
 	return t.Len() == 0
 }
 
-func cloneNodeWithAncestors[K comparable, V any](node *Node[K, V]) *Node[K, V] {
+func cloneNodeWithAncestorsShallow[K comparable, V any](node *Node[K, V]) *Node[K, V] {
 	if node == nil {
 		return nil
 	}
 
-	targetClone := cloneSubtreeDetached(node)
+	targetClone := newNode(node.ID(), node.Value())
 	currentClone := targetClone
 	for currentParent := node.parent; currentParent != nil; currentParent = currentParent.parent {
 		parentClone := newNode(currentParent.ID(), currentParent.Value())

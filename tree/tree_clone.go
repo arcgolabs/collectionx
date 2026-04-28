@@ -1,5 +1,7 @@
 package tree
 
+import collectionlist "github.com/arcgolabs/collectionx/list"
+
 // Clone returns a deep copy preserving parent-children structure.
 func (t *Tree[K, V]) Clone() *Tree[K, V] {
 	if t == nil || t.nodes == nil || t.nodes.IsEmpty() {
@@ -54,35 +56,61 @@ func cloneSubtreeDetachedWithDescendants[K comparable, V any](root *Node[K, V], 
 		return nil, nil
 	}
 
-	rootClone := newNode(root.ID(), root.Value())
-
-	type pair struct {
-		source *Node[K, V]
-		target *Node[K, V]
+	type sourceEntry struct {
+		node        *Node[K, V]
+		parentIndex int
+		childCount  int
 	}
 
-	stack := []pair{{source: root, target: rootClone}}
-	var descendants []*Node[K, V]
-	if collectDescendants && root.children.Len() > 0 {
-		descendants = make([]*Node[K, V], 0, root.children.Len())
+	entries := make([]sourceEntry, 0, 16)
+	type stackItem struct {
+		node        *Node[K, V]
+		parentIndex int
 	}
-
+	stack := []stackItem{{node: root, parentIndex: -1}}
 	for len(stack) > 0 {
 		current := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
 
-		if collectDescendants && current.source != root {
-			descendants = append(descendants, current.target)
-		}
+		childCount := current.node.children.Len()
+		entryIndex := len(entries)
+		entries = append(entries, sourceEntry{
+			node:        current.node,
+			parentIndex: current.parentIndex,
+			childCount:  childCount,
+		})
 
-		for index := current.source.children.Len() - 1; index >= 0; index-- {
-			sourceChild, _ := current.source.children.Get(index)
-			targetChild := newNode(sourceChild.ID(), sourceChild.Value())
-			targetChild.parent = current.target
-			current.target.children.Add(targetChild)
-			stack = append(stack, pair{source: sourceChild, target: targetChild})
+		for index := childCount - 1; index >= 0; index-- {
+			child, _ := current.node.children.Get(index)
+			stack = append(stack, stackItem{node: child, parentIndex: entryIndex})
 		}
 	}
 
-	return rootClone, descendants
+	clones := make([]Node[K, V], len(entries))
+	for i, entry := range entries {
+		clones[i].id = entry.node.ID()
+		clones[i].value = entry.node.Value()
+		if entry.childCount > 0 {
+			clones[i].children = *collectionlist.NewListWithCapacity[*Node[K, V]](entry.childCount)
+		}
+	}
+
+	var descendants []*Node[K, V]
+	if collectDescendants && len(entries) > 1 {
+		descendants = make([]*Node[K, V], 0, len(entries)-1)
+	}
+
+	for i, entry := range entries {
+		currentClone := &clones[i]
+		if entry.parentIndex >= 0 {
+			parentClone := &clones[entry.parentIndex]
+			currentClone.parent = parentClone
+			parentClone.children.Add(currentClone)
+		}
+		if collectDescendants && i > 0 {
+			descendants = append(descendants, currentClone)
+		}
+	}
+
+	return &clones[0], descendants
 }

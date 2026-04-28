@@ -2,7 +2,6 @@ package mapping
 
 import (
 	"hash/maphash"
-	"strconv"
 	"sync"
 
 	"github.com/samber/lo"
@@ -94,7 +93,16 @@ func shardMask(shardCount int) uint64 {
 }
 
 func hashSignedInt64(value int64) uint64 {
-	return maphash.Bytes(hashStringSeed, strconv.AppendInt(nil, value, 10))
+	return mixUint64(uint64(value))
+}
+
+func mixUint64(value uint64) uint64 {
+	value ^= value >> 30
+	value *= 0xbf58476d1ce4e5b9
+	value ^= value >> 27
+	value *= 0x94d049bb133111eb
+	value ^= value >> 31
+	return value
 }
 
 // Set puts a key-value pair.
