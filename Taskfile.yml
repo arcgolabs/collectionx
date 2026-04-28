@@ -6,8 +6,11 @@ tasks:
   default:
     desc: Run the workspace test suite
     deps:
+      - test:bitset
+      - test:disjointset
       - test:root
       - test:examples
+      - test:graph
       - test:interval
       - test:list
       - test:mapping
@@ -15,12 +18,27 @@ tasks:
       - test:set
       - test:tree
 
+  test:bitset:
+    dir: bitset
+    cmds:
+      - go test ./...
+
+  test:disjointset:
+    dir: disjointset
+    cmds:
+      - go test ./...
+
   test:root:
     cmds:
       - go test ./...
 
   test:examples:
     dir: examples
+    cmds:
+      - go test ./...
+
+  test:graph:
+    dir: graph
     cmds:
       - go test ./...
 
@@ -60,7 +78,10 @@ tasks:
       vars: [VERSION]
     cmds:
       - git tag v{{.VERSION}}
+      - git tag bitset/v{{.VERSION}}
+      - git tag disjointset/v{{.VERSION}}
       - git tag examples/v{{.VERSION}}
+      - git tag graph/v{{.VERSION}}
       - git tag internal/v{{.VERSION}}
       - git tag interval/v{{.VERSION}}
       - git tag list/v{{.VERSION}}
@@ -75,7 +96,10 @@ tasks:
       vars: [VERSION]
     cmds:
       - git push origin v{{.VERSION}}
+      - git push origin bitset/v{{.VERSION}}
+      - git push origin disjointset/v{{.VERSION}}
       - git push origin examples/v{{.VERSION}}
+      - git push origin graph/v{{.VERSION}}
       - git push origin internal/v{{.VERSION}}
       - git push origin interval/v{{.VERSION}}
       - git push origin list/v{{.VERSION}}
