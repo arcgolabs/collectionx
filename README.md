@@ -28,10 +28,11 @@
 ## Install / Import
 
 ```bash
-go get github.com/arcgolabs/collectionx@latest
+go get github.com/arcgolabs/collectionx/set@latest
+go get github.com/arcgolabs/collectionx/mapping@latest
 ```
 
-Import the **subpackage** you need (for example `collectionx/set`, `collectionx/mapping`).
+Import the **subpackage** you need (for example `collectionx/set`, `collectionx/mapping`, `collectionx/list`).
 
 ## Why use collectionx
 
@@ -58,14 +59,16 @@ Most structures support `ToJSON`, `MarshalJSON` (for `json.Marshal`), and `Strin
 ## Benchmarks
 
 ```bash
-go test ./collectionx/... -run ^$ -bench . -benchmem
+go test ./set -run ^$ -bench . -benchmem
+go test ./mapping -run ^$ -bench . -benchmem
+go test ./list -run ^$ -bench . -benchmem
 ```
 
 Target one package:
 
 ```bash
-go test ./collectionx/mapping -run ^$ -bench . -benchmem
-go test ./collectionx/prefix -run ^$ -bench Trie -benchmem
+go test ./mapping -run ^$ -bench . -benchmem
+go test ./prefix -run ^$ -bench Trie -benchmem
 ```
 
 ## Practical tips

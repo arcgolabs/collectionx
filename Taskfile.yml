@@ -5,6 +5,52 @@ version: '3'
 tasks:
   default:
     desc: Run the workspace test suite
+    deps:
+      - test:root
+      - test:examples
+      - test:interval
+      - test:list
+      - test:mapping
+      - test:prefix
+      - test:set
+      - test:tree
+
+  test:root:
+    cmds:
+      - go test ./...
+
+  test:examples:
+    dir: examples
+    cmds:
+      - go test ./...
+
+  test:interval:
+    dir: interval
+    cmds:
+      - go test ./...
+
+  test:list:
+    dir: list
+    cmds:
+      - go test ./...
+
+  test:mapping:
+    dir: mapping
+    cmds:
+      - go test ./...
+
+  test:prefix:
+    dir: prefix
+    cmds:
+      - go test ./...
+
+  test:set:
+    dir: set
+    cmds:
+      - go test ./...
+
+  test:tree:
+    dir: tree
     cmds:
       - go test ./...
 
