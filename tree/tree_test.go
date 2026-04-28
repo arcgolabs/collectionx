@@ -11,8 +11,10 @@ func TestTree_AddAndRelationships(t *testing.T) {
 	tr := tree.NewTree[int, string]()
 
 	require.NoError(t, tr.AddRoot(1, "root"))
+	require.NoError(t, tr.AddRoot(9, "root-b"))
 	require.NoError(t, tr.AddChild(1, 2, "child-a"))
 	require.NoError(t, tr.AddChild(2, 3, "child-b"))
+	require.NoError(t, tr.AddChild(1, 4, "child-c"))
 
 	n3, ok := tr.Get(3)
 	require.True(t, ok)
@@ -24,11 +26,17 @@ func TestTree_AddAndRelationships(t *testing.T) {
 
 	ancestors := tr.Ancestors(3)
 	require.Equal(t, []int{2, 1}, nodeIDs(ancestors))
+	depth, ok := tr.Depth(3)
+	require.True(t, ok)
+	require.Equal(t, 2, depth)
 
 	descendants := tr.Descendants(1)
-	require.Equal(t, []int{2, 3}, nodeIDs(descendants))
-	require.Equal(t, []int{2}, nodeIDs(tr.Children(1)))
-	require.Equal(t, 3, tr.Len())
+	require.Equal(t, []int{2, 3, 4}, nodeIDs(descendants))
+	require.Equal(t, []int{2, 4}, nodeIDs(tr.Children(1)))
+	require.Equal(t, []int{4}, nodeIDs(tr.Siblings(2)))
+	require.Equal(t, []int{9}, nodeIDs(tr.Siblings(1)))
+	require.Equal(t, []int{3, 4, 9}, nodeIDs(tr.Leaves()))
+	require.Equal(t, 5, tr.Len())
 }
 
 func TestTree_MoveAndCycleDetection(t *testing.T) {
@@ -121,6 +129,49 @@ func TestBuild_WithDuplicateNode(t *testing.T) {
 
 	_, err := tree.Build(entries)
 	require.ErrorIs(t, err, tree.ErrNodeAlreadyExists)
+}
+
+func TestTree_QueryMissingAndEmptyCases(t *testing.T) {
+	tr := tree.NewTree[int, string]()
+
+	depth, ok := tr.Depth(42)
+	require.False(t, ok)
+	require.Zero(t, depth)
+	require.Nil(t, tr.Siblings(42))
+	require.Nil(t, tr.Leaves())
+
+	require.NoError(t, tr.AddRoot(1, "root"))
+
+	depth, ok = tr.Depth(1)
+	require.True(t, ok)
+	require.Zero(t, depth)
+	require.Nil(t, tr.Siblings(1))
+	require.Equal(t, []int{1}, nodeIDs(tr.Leaves()))
+}
+
+func TestTree_RangeBFS(t *testing.T) {
+	tr := tree.NewTree[int, string]()
+
+	require.NoError(t, tr.AddRoot(1, "root-a"))
+	require.NoError(t, tr.AddRoot(2, "root-b"))
+	require.NoError(t, tr.AddChild(1, 3, "a-1"))
+	require.NoError(t, tr.AddChild(1, 4, "a-2"))
+	require.NoError(t, tr.AddChild(2, 5, "b-1"))
+	require.NoError(t, tr.AddChild(3, 6, "a-1-1"))
+
+	var visited []int
+	tr.RangeBFS(func(node *tree.Node[int, string]) bool {
+		visited = append(visited, node.ID())
+		return true
+	})
+	require.Equal(t, []int{1, 2, 3, 4, 5, 6}, visited)
+
+	visited = visited[:0]
+	tr.RangeBFS(func(node *tree.Node[int, string]) bool {
+		visited = append(visited, node.ID())
+		return node.ID() != 4
+	})
+	require.Equal(t, []int{1, 2, 3, 4}, visited)
 }
 
 func nodeIDs(nodes []*tree.Node[int, string]) []int {

@@ -249,6 +249,34 @@ func (s *Set[T]) Union(other *Set[T]) *Set[T] {
 	return out
 }
 
+// SymmetricDifference returns items that exist in exactly one of the two sets.
+func (s *Set[T]) SymmetricDifference(other *Set[T]) *Set[T] {
+	if s == nil || s.items.Len() == 0 {
+		if other == nil {
+			return &Set[T]{}
+		}
+		return other.Clone()
+	}
+	if other == nil || other.items.Len() == 0 {
+		return s.Clone()
+	}
+
+	out := NewSetWithCapacity[T](s.Len() + other.Len())
+	s.items.Range(func(item T, _ struct{}) bool {
+		if _, ok := other.items.Get(item); !ok {
+			out.items.Set(item, struct{}{})
+		}
+		return true
+	})
+	other.items.Range(func(item T, _ struct{}) bool {
+		if _, ok := s.items.Get(item); !ok {
+			out.items.Set(item, struct{}{})
+		}
+		return true
+	})
+	return out
+}
+
 // Intersect returns a new set that contains shared items.
 func (s *Set[T]) Intersect(other *Set[T]) *Set[T] {
 	out := &Set[T]{}
@@ -272,6 +300,29 @@ func (s *Set[T]) Intersect(other *Set[T]) *Set[T] {
 	return out
 }
 
+// Overlaps reports whether the two sets share at least one item.
+func (s *Set[T]) Overlaps(other *Set[T]) bool {
+	if s == nil || other == nil || s.items.Len() == 0 || other.items.Len() == 0 {
+		return false
+	}
+
+	left := &s.items
+	right := &other.items
+	if left.Len() > right.Len() {
+		left, right = right, left
+	}
+
+	overlaps := false
+	left.Range(func(item T, _ struct{}) bool {
+		if _, ok := right.Get(item); ok {
+			overlaps = true
+			return false
+		}
+		return true
+	})
+	return overlaps
+}
+
 // Difference returns a new set with items in s but not in other.
 func (s *Set[T]) Difference(other *Set[T]) *Set[T] {
 	out := &Set[T]{}
@@ -290,6 +341,34 @@ func (s *Set[T]) Difference(other *Set[T]) *Set[T] {
 		return true
 	})
 	return out
+}
+
+// IsSubsetOf reports whether every item in s exists in other.
+func (s *Set[T]) IsSubsetOf(other *Set[T]) bool {
+	if s == nil || s.items.Len() == 0 {
+		return true
+	}
+	if other == nil || other.items.Len() < s.items.Len() {
+		return false
+	}
+
+	subset := true
+	s.items.Range(func(item T, _ struct{}) bool {
+		if _, ok := other.items.Get(item); ok {
+			return true
+		}
+		subset = false
+		return false
+	})
+	return subset
+}
+
+// IsSupersetOf reports whether every item in other exists in s.
+func (s *Set[T]) IsSupersetOf(other *Set[T]) bool {
+	if other == nil || other.items.Len() == 0 {
+		return true
+	}
+	return other.IsSubsetOf(s)
 }
 
 func (s *Set[T]) invalidateSerializationCache() {

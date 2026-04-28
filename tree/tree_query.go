@@ -62,6 +62,50 @@ func (t *Tree[K, V]) Ancestors(id K) []*Node[K, V] {
 	return ancestors
 }
 
+// Depth returns the number of edges from one root to the node.
+func (t *Tree[K, V]) Depth(id K) (int, bool) {
+	node, ok := t.Get(id)
+	if !ok {
+		return 0, false
+	}
+
+	depth := 0
+	for current := node.parent; current != nil; current = current.parent {
+		depth++
+	}
+	return depth, true
+}
+
+// Siblings returns sibling nodes snapshot excluding the node itself.
+func (t *Tree[K, V]) Siblings(id K) []*Node[K, V] {
+	node, ok := t.Get(id)
+	if !ok {
+		return nil
+	}
+
+	var source []*Node[K, V]
+	if node.parent == nil {
+		source = t.Roots()
+	} else {
+		source = node.parent.Children()
+	}
+
+	if len(source) <= 1 {
+		return nil
+	}
+
+	siblings := make([]*Node[K, V], 0, len(source)-1)
+	for _, candidate := range source {
+		if candidate != node {
+			siblings = append(siblings, candidate)
+		}
+	}
+	if len(siblings) == 0 {
+		return nil
+	}
+	return siblings
+}
+
 // Descendants returns all descendants in DFS pre-order.
 func (t *Tree[K, V]) Descendants(id K) []*Node[K, V] {
 	node, ok := t.Get(id)
@@ -91,6 +135,14 @@ func (t *Tree[K, V]) Descendants(id K) []*Node[K, V] {
 	return descendants
 }
 
+// Leaves returns all leaf nodes in DFS pre-order.
+func (t *Tree[K, V]) Leaves() []*Node[K, V] {
+	if t == nil {
+		return nil
+	}
+	return collectLeaves(t.Roots())
+}
+
 // RangeDFS iterates all nodes in DFS pre-order until fn returns false.
 func (t *Tree[K, V]) RangeDFS(fn func(node *Node[K, V]) bool) {
 	if t == nil || fn == nil {
@@ -98,6 +150,15 @@ func (t *Tree[K, V]) RangeDFS(fn func(node *Node[K, V]) bool) {
 	}
 
 	rangeDFSRoots(t.Roots(), fn)
+}
+
+// RangeBFS iterates all nodes in BFS order until fn returns false.
+func (t *Tree[K, V]) RangeBFS(fn func(node *Node[K, V]) bool) {
+	if t == nil || fn == nil {
+		return
+	}
+
+	rangeBFSRoots(t.Roots(), fn)
 }
 
 // Len returns total node count.
@@ -140,6 +201,26 @@ func rangeDFSFromRoot[K comparable, V any](root *Node[K, V], fn func(node *Node[
 	return true
 }
 
+func rangeBFSRoots[K comparable, V any](roots []*Node[K, V], fn func(node *Node[K, V]) bool) {
+	if len(roots) == 0 {
+		return
+	}
+
+	queue := append(make([]*Node[K, V], 0, len(roots)), roots...)
+	for head := 0; head < len(queue); head++ {
+		current := queue[head]
+		if !fn(current) {
+			return
+		}
+
+		childCount := current.children.Len()
+		for i := range childCount {
+			child, _ := current.children.Get(i)
+			queue = append(queue, child)
+		}
+	}
+}
+
 func appendChildrenReverse[K comparable, V any](stack []*Node[K, V], node *Node[K, V]) []*Node[K, V] {
 	if node == nil {
 		return stack
@@ -151,4 +232,22 @@ func appendChildrenReverse[K comparable, V any](stack []*Node[K, V], node *Node[
 	}
 
 	return stack
+}
+
+func collectLeaves[K comparable, V any](roots []*Node[K, V]) []*Node[K, V] {
+	if len(roots) == 0 {
+		return nil
+	}
+
+	leaves := make([]*Node[K, V], 0, len(roots))
+	rangeDFSRoots(roots, func(node *Node[K, V]) bool {
+		if node.children.Len() == 0 {
+			leaves = append(leaves, node)
+		}
+		return true
+	})
+	if len(leaves) == 0 {
+		return nil
+	}
+	return leaves
 }

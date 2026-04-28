@@ -59,28 +59,70 @@ func (s *RangeSet[T]) Remove(start, end T) bool {
 
 // Contains reports whether value is in any range.
 func (s *RangeSet[T]) Contains(value T) bool {
+	_, ok := s.Containing(value)
+	return ok
+}
+
+// Containing returns the stored range containing value.
+func (s *RangeSet[T]) Containing(value T) (Range[T], bool) {
+	var zero Range[T]
 	if s == nil || len(s.ranges) == 0 {
-		return false
+		return zero, false
 	}
 	index := sort.Search(len(s.ranges), func(i int) bool {
 		return s.ranges[i].End > value
 	})
-	return index < len(s.ranges) && s.ranges[index].Contains(value)
+	if index < len(s.ranges) && s.ranges[index].Contains(value) {
+		return s.ranges[index], true
+	}
+	return zero, false
 }
 
 // Overlaps reports whether input range overlaps any stored range.
 func (s *RangeSet[T]) Overlaps(start, end T) bool {
+	return len(s.Overlapping(start, end)) > 0
+}
+
+// Overlapping returns stored ranges that overlap the input range.
+func (s *RangeSet[T]) Overlapping(start, end T) []Range[T] {
 	if s == nil || len(s.ranges) == 0 {
-		return false
+		return nil
 	}
 	input := Range[T]{Start: start, End: end}
 	if !input.IsValid() {
-		return false
+		return nil
 	}
 	index := sort.Search(len(s.ranges), func(i int) bool {
 		return s.ranges[i].End > input.Start
 	})
-	return index < len(s.ranges) && s.ranges[index].Start < input.End
+	if index == len(s.ranges) {
+		return nil
+	}
+
+	overlaps := make([]Range[T], 0, 4)
+	for ; index < len(s.ranges); index++ {
+		current := s.ranges[index]
+		if current.Start >= input.End {
+			break
+		}
+		overlaps = append(overlaps, current)
+	}
+	if len(overlaps) == 0 {
+		return nil
+	}
+	return overlaps
+}
+
+// Bounds returns the smallest range covering all stored ranges.
+func (s *RangeSet[T]) Bounds() (Range[T], bool) {
+	var zero Range[T]
+	if s == nil || len(s.ranges) == 0 {
+		return zero, false
+	}
+	return Range[T]{
+		Start: s.ranges[0].Start,
+		End:   s.ranges[len(s.ranges)-1].End,
+	}, true
 }
 
 // Ranges returns copied normalized ranges.

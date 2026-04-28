@@ -46,6 +46,10 @@ func TestRangeSet_BoundariesAndOverlaps(t *testing.T) {
 	s.Add(0, 10)
 	s.Add(20, 30)
 
+	containing, ok := s.Containing(0)
+	require.True(t, ok)
+	require.Equal(t, interval.Range[int]{Start: 0, End: 10}, containing)
+
 	require.True(t, s.Contains(0))
 	require.True(t, s.Contains(9))
 	require.False(t, s.Contains(10))
@@ -55,6 +59,36 @@ func TestRangeSet_BoundariesAndOverlaps(t *testing.T) {
 	require.False(t, s.Overlaps(10, 20))
 	require.True(t, s.Overlaps(9, 11))
 	require.True(t, s.Overlaps(29, 40))
+	require.Equal(t, []interval.Range[int]{
+		{Start: 0, End: 10},
+		{Start: 20, End: 30},
+	}, s.Overlapping(5, 25))
+
+	bounds, ok := s.Bounds()
+	require.True(t, ok)
+	require.Equal(t, interval.Range[int]{Start: 0, End: 30}, bounds)
+}
+
+func TestRangeSet_ContainingOverlappingAndBounds_EmptyOrMiss(t *testing.T) {
+	t.Parallel()
+
+	s := interval.NewRangeSet[int]()
+
+	containing, ok := s.Containing(5)
+	require.False(t, ok)
+	require.Equal(t, interval.Range[int]{}, containing)
+	require.Nil(t, s.Overlapping(1, 3))
+
+	bounds, ok := s.Bounds()
+	require.False(t, ok)
+	require.Equal(t, interval.Range[int]{}, bounds)
+
+	require.True(t, s.Add(10, 20))
+	containing, ok = s.Containing(20)
+	require.False(t, ok)
+	require.Equal(t, interval.Range[int]{}, containing)
+	require.Nil(t, s.Overlapping(20, 30))
+	require.Nil(t, s.Overlapping(30, 20))
 }
 
 func TestRangeSet_CachesReturnDefensiveCopies(t *testing.T) {

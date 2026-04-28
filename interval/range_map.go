@@ -51,6 +51,16 @@ func (m *RangeMap[T, V]) Put(start, end T, value V) bool {
 // Get returns value for point query.
 func (m *RangeMap[T, V]) Get(point T) (V, bool) {
 	var zero V
+	entry, ok := m.Containing(point)
+	if !ok {
+		return zero, false
+	}
+	return entry.Value, true
+}
+
+// Containing returns the stored entry containing point.
+func (m *RangeMap[T, V]) Containing(point T) (RangeEntry[T, V], bool) {
+	var zero RangeEntry[T, V]
 	if m == nil || len(m.entries) == 0 {
 		return zero, false
 	}
@@ -58,7 +68,7 @@ func (m *RangeMap[T, V]) Get(point T) (V, bool) {
 		return m.entries[i].Range.End > point
 	})
 	if index < len(m.entries) && m.entries[index].Range.Contains(point) {
-		return m.entries[index].Value, true
+		return m.entries[index], true
 	}
 	return zero, false
 }
@@ -87,6 +97,49 @@ func (m *RangeMap[T, V]) DeleteRange(start, end T) bool {
 		m.invalidateDerivedCaches()
 	}
 	return changed
+}
+
+// Overlapping returns stored entries whose ranges overlap the input range.
+func (m *RangeMap[T, V]) Overlapping(start, end T) []RangeEntry[T, V] {
+	if m == nil || len(m.entries) == 0 {
+		return nil
+	}
+	input := Range[T]{Start: start, End: end}
+	if !input.IsValid() {
+		return nil
+	}
+
+	index := sort.Search(len(m.entries), func(i int) bool {
+		return m.entries[i].Range.End > input.Start
+	})
+	if index == len(m.entries) {
+		return nil
+	}
+
+	overlaps := make([]RangeEntry[T, V], 0, 4)
+	for ; index < len(m.entries); index++ {
+		current := m.entries[index]
+		if current.Range.Start >= input.End {
+			break
+		}
+		overlaps = append(overlaps, current)
+	}
+	if len(overlaps) == 0 {
+		return nil
+	}
+	return overlaps
+}
+
+// Bounds returns the smallest range covering all stored entries.
+func (m *RangeMap[T, V]) Bounds() (Range[T], bool) {
+	var zero Range[T]
+	if m == nil || len(m.entries) == 0 {
+		return zero, false
+	}
+	return Range[T]{
+		Start: m.entries[0].Range.Start,
+		End:   m.entries[len(m.entries)-1].Range.End,
+	}, true
 }
 
 // Entries returns copied entries sorted by range start.

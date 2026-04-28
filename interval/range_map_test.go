@@ -28,6 +28,13 @@ func TestRangeMap_PutOverride(t *testing.T) {
 	value, ok := m.Get(4)
 	require.True(t, ok)
 	require.Equal(t, "B", value)
+
+	entry, ok := m.Containing(4)
+	require.True(t, ok)
+	require.Equal(t, interval.RangeEntry[int, string]{
+		Range: interval.Range[int]{Start: 3, End: 6},
+		Value: "B",
+	}, entry)
 }
 
 func TestRangeMap_DeleteRangeAndOption(t *testing.T) {
@@ -69,6 +76,39 @@ func TestRangeMap_PutKeepsEntriesSorted(t *testing.T) {
 		},
 		m.Entries(),
 	)
+
+	overlaps := m.Overlapping(2, 15)
+	require.Equal(t, []interval.RangeEntry[int, string]{
+		{Range: interval.Range[int]{Start: 0, End: 3}, Value: "B"},
+		{Range: interval.Range[int]{Start: 3, End: 12}, Value: "D"},
+		{Range: interval.Range[int]{Start: 12, End: 20}, Value: "A"},
+	}, overlaps)
+
+	bounds, ok := m.Bounds()
+	require.True(t, ok)
+	require.Equal(t, interval.Range[int]{Start: 0, End: 20}, bounds)
+}
+
+func TestRangeMap_ContainingOverlappingAndBounds_EmptyOrMiss(t *testing.T) {
+	t.Parallel()
+
+	m := interval.NewRangeMap[int, string]()
+
+	entry, ok := m.Containing(5)
+	require.False(t, ok)
+	require.Equal(t, interval.RangeEntry[int, string]{}, entry)
+	require.Nil(t, m.Overlapping(1, 3))
+
+	bounds, ok := m.Bounds()
+	require.False(t, ok)
+	require.Equal(t, interval.Range[int]{}, bounds)
+
+	require.True(t, m.Put(10, 20, "A"))
+	entry, ok = m.Containing(20)
+	require.False(t, ok)
+	require.Equal(t, interval.RangeEntry[int, string]{}, entry)
+	require.Nil(t, m.Overlapping(20, 30))
+	require.Nil(t, m.Overlapping(30, 20))
 }
 
 func TestRangeMap_CachesReturnDefensiveCopies(t *testing.T) {

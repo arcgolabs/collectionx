@@ -108,6 +108,55 @@ func (t *Trie[V]) HasPrefix(prefix string) bool {
 	return ok
 }
 
+// CountPrefix reports how many stored keys start with prefix.
+func (t *Trie[V]) CountPrefix(prefix string) int {
+	if t == nil || t.root == nil {
+		return 0
+	}
+	node, ok := t.findNode(prefix)
+	if !ok {
+		return 0
+	}
+	return node.valueCount
+}
+
+// LongestPrefix returns the longest stored key that is a prefix of key.
+func (t *Trie[V]) LongestPrefix(key string) (string, V, bool) {
+	var zero V
+	if t == nil || t.root == nil {
+		return "", zero, false
+	}
+
+	node := t.root
+	lastMatchIndex := -1
+	var lastMatchValue V
+	matched := false
+	if node.hasValue {
+		lastMatchValue = node.value
+		matched = true
+	}
+	runes := []rune(key)
+	for index, ch := range runes {
+		next, ok := node.children.Get(ch)
+		if !ok {
+			break
+		}
+		node = next
+		if node.hasValue {
+			lastMatchIndex = index
+			lastMatchValue = node.value
+			matched = true
+		}
+	}
+	if !matched {
+		return "", zero, false
+	}
+	if lastMatchIndex < 0 {
+		return "", lastMatchValue, true
+	}
+	return string(runes[:lastMatchIndex+1]), lastMatchValue, true
+}
+
 // Delete removes key and returns whether key existed.
 func (t *Trie[V]) Delete(key string) bool {
 	if t == nil || t.root == nil {
@@ -118,6 +167,47 @@ func (t *Trie[V]) Delete(key string) bool {
 	if removed {
 		t.size--
 	}
+	return removed
+}
+
+// DeletePrefix removes all keys that start with prefix and returns removed key count.
+func (t *Trie[V]) DeletePrefix(prefix string) int {
+	if t == nil || t.root == nil {
+		return 0
+	}
+	if prefix == "" {
+		removed := t.size
+		t.Clear()
+		return removed
+	}
+
+	runes := []rune(prefix)
+	path := make([]*trieNode[V], 1, len(runes)+1)
+	path[0] = t.root
+	node := t.root
+	for _, ch := range runes {
+		next, ok := node.children.Get(ch)
+		if !ok {
+			return 0
+		}
+		node = next
+		path = append(path, node)
+	}
+
+	removed := node.valueCount
+	if removed == 0 {
+		return 0
+	}
+
+	parent := path[len(path)-2]
+	lastRune := runes[len(runes)-1]
+	parent.children.Delete(lastRune)
+	parent.deleteChildKey(lastRune)
+
+	for _, current := range path[:len(path)-1] {
+		current.valueCount -= removed
+	}
+	t.size -= removed
 	return removed
 }
 
@@ -233,7 +323,6 @@ func (t *Trie[V]) deleteRec(node *trieNode[V], runes []rune, depth int) bool {
 	}
 
 	node.valueCount--
-
 	if !child.hasValue && child.children.Len() == 0 {
 		node.children.Delete(ch)
 		node.deleteChildKey(ch)

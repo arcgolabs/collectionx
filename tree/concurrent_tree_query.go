@@ -134,6 +134,68 @@ func (t *ConcurrentTree[K, V]) Ancestors(id K) []*Node[K, V] {
 	return out
 }
 
+// Depth returns the number of edges from one root to the node.
+func (t *ConcurrentTree[K, V]) Depth(id K) (int, bool) {
+	if t == nil {
+		return 0, false
+	}
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	if t.tree == nil {
+		return 0, false
+	}
+	node, ok := t.tree.Get(id)
+	if !ok {
+		return 0, false
+	}
+
+	depth := 0
+	for current := node.parent; current != nil; current = current.parent {
+		depth++
+	}
+	return depth, true
+}
+
+// Siblings returns sibling nodes snapshot excluding the node itself.
+func (t *ConcurrentTree[K, V]) Siblings(id K) []*Node[K, V] {
+	if t == nil {
+		return nil
+	}
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	if t.tree == nil {
+		return nil
+	}
+	node, ok := t.tree.Get(id)
+	if !ok {
+		return nil
+	}
+
+	var siblingsSource []*Node[K, V]
+	if node.parent == nil {
+		if t.tree.roots == nil || t.tree.roots.Len() <= 1 {
+			return nil
+		}
+		siblingsSource = t.tree.roots.Values()
+	} else {
+		if node.parent.children.Len() <= 1 {
+			return nil
+		}
+		siblingsSource = node.parent.children.Values()
+	}
+
+	siblings := make([]*Node[K, V], 0, len(siblingsSource)-1)
+	for _, sibling := range siblingsSource {
+		if sibling != node {
+			siblings = append(siblings, cloneSubtreeDetached(sibling))
+		}
+	}
+	if len(siblings) == 0 {
+		return nil
+	}
+	return siblings
+}
+
 // Descendants returns all descendants in DFS pre-order.
 func (t *ConcurrentTree[K, V]) Descendants(id K) []*Node[K, V] {
 	if t == nil {
@@ -154,6 +216,15 @@ func (t *ConcurrentTree[K, V]) Descendants(id K) []*Node[K, V] {
 	return descendants
 }
 
+// Leaves returns all leaf nodes in DFS pre-order.
+func (t *ConcurrentTree[K, V]) Leaves() []*Node[K, V] {
+	if t == nil {
+		return nil
+	}
+
+	return collectLeaves(t.snapshotClonedRoots())
+}
+
 // RangeDFS iterates all nodes in DFS pre-order until fn returns false.
 func (t *ConcurrentTree[K, V]) RangeDFS(fn func(node *Node[K, V]) bool) {
 	if t == nil || fn == nil {
@@ -161,6 +232,15 @@ func (t *ConcurrentTree[K, V]) RangeDFS(fn func(node *Node[K, V]) bool) {
 	}
 
 	rangeDFSRoots(t.snapshotClonedRoots(), fn)
+}
+
+// RangeBFS iterates all nodes in BFS order until fn returns false.
+func (t *ConcurrentTree[K, V]) RangeBFS(fn func(node *Node[K, V]) bool) {
+	if t == nil || fn == nil {
+		return
+	}
+
+	rangeBFSRoots(t.snapshotClonedRoots(), fn)
 }
 
 // Len returns total node count.

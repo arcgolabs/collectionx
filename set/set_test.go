@@ -35,6 +35,13 @@ func TestSet_MathOperations(t *testing.T) {
 	require.ElementsMatch(t, []int{1, 2, 3, 4, 5}, left.Union(right).Values())
 	require.ElementsMatch(t, []int{3}, left.Intersect(right).Values())
 	require.ElementsMatch(t, []int{1, 2}, left.Difference(right).Values())
+	require.ElementsMatch(t, []int{1, 2, 4, 5}, left.SymmetricDifference(right).Values())
+	require.True(t, left.Overlaps(right))
+	require.False(t, left.Overlaps(set.NewSet(7, 8)))
+	require.True(t, set.NewSet(1, 2).IsSubsetOf(left))
+	require.False(t, set.NewSet(1, 9).IsSubsetOf(left))
+	require.True(t, left.IsSupersetOf(set.NewSet(1, 2)))
+	require.False(t, left.IsSupersetOf(set.NewSet(1, 9)))
 }
 
 func TestSet_RangeStop(t *testing.T) {
