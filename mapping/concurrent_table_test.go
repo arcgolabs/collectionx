@@ -41,6 +41,11 @@ func TestConcurrentTable_OptionDeleteAndSnapshot(t *testing.T) {
 	tb.Put("u1", "level", 2)
 	tb.Put("u2", "score", 20)
 
+	require.True(t, tb.HasRow("u1"))
+	require.False(t, tb.HasRow("missing"))
+	require.True(t, tb.HasColumn("score"))
+	require.False(t, tb.HasColumn("missing"))
+
 	opt := tb.GetOption("u1", "score")
 	require.True(t, opt.IsPresent())
 	value, ok := opt.Get()
@@ -54,6 +59,15 @@ func TestConcurrentTable_OptionDeleteAndSnapshot(t *testing.T) {
 	tb.Put("u3", "score", 99)
 	_, ok = snapshot.Get("u3", "score")
 	require.False(t, ok)
+}
+
+func TestConcurrentTable_HasRowAndHasColumn_Empty(t *testing.T) {
+	t.Parallel()
+
+	var tb mapping.ConcurrentTable[string, string, int]
+
+	require.False(t, tb.HasRow("r1"))
+	require.False(t, tb.HasColumn("c1"))
 }
 
 func TestConcurrentTable_FluentOps(t *testing.T) {

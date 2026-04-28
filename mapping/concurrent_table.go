@@ -155,6 +155,32 @@ func (t *ConcurrentTable[R, C, V]) Has(rowKey R, columnKey C) bool {
 	return ok
 }
 
+// HasRow reports whether rowKey exists and contains at least one cell.
+func (t *ConcurrentTable[R, C, V]) HasRow(rowKey R) bool {
+	if t == nil {
+		return false
+	}
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	if t.core == nil {
+		return false
+	}
+	return t.core.HasRow(rowKey)
+}
+
+// HasColumn reports whether columnKey exists in any row.
+func (t *ConcurrentTable[R, C, V]) HasColumn(columnKey C) bool {
+	if t == nil {
+		return false
+	}
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	if t.core == nil {
+		return false
+	}
+	return t.core.HasColumn(columnKey)
+}
+
 // RowCount returns total row count.
 func (t *ConcurrentTable[R, C, V]) RowCount() int {
 	if t == nil {

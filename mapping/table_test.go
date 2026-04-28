@@ -44,6 +44,10 @@ func TestTable_RowColumnAndOption(t *testing.T) {
 
 	col := tb.Column("c1")
 	require.Equal(t, map[string]int{"r1": 1, "r2": 3}, col)
+	require.True(t, tb.HasRow("r1"))
+	require.False(t, tb.HasRow("missing"))
+	require.True(t, tb.HasColumn("c1"))
+	require.False(t, tb.HasColumn("c9"))
 
 	opt := tb.GetOption("r2", "c1")
 	require.True(t, opt.IsPresent())
@@ -52,6 +56,15 @@ func TestTable_RowColumnAndOption(t *testing.T) {
 	require.Equal(t, 3, value)
 
 	require.True(t, tb.GetOption("missing", "c1").IsAbsent())
+}
+
+func TestTable_HasRowAndHasColumn_Empty(t *testing.T) {
+	t.Parallel()
+
+	var tb mapping.Table[string, string, int]
+
+	require.False(t, tb.HasRow("r1"))
+	require.False(t, tb.HasColumn("c1"))
 }
 
 func TestTable_DeleteColumn(t *testing.T) {

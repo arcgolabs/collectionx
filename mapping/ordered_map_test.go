@@ -35,6 +35,16 @@ func TestOrderedMap_DeleteAndAt(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, 3, key)
 	require.Equal(t, "c", value)
+
+	firstKey, firstValue, ok := m.First()
+	require.True(t, ok)
+	require.Equal(t, 1, firstKey)
+	require.Equal(t, "a", firstValue)
+
+	lastKey, lastValue, ok := m.Last()
+	require.True(t, ok)
+	require.Equal(t, 3, lastKey)
+	require.Equal(t, "c", lastValue)
 }
 
 func TestNewOrderedMapWithCapacity(t *testing.T) {
@@ -119,4 +129,20 @@ func TestOrderedMap_JSONCacheReturnsDefensiveCopy(t *testing.T) {
 	m.Set("b", 2)
 	require.Contains(t, m.String(), `"a":1`)
 	require.Contains(t, m.String(), `"b":2`)
+}
+
+func TestOrderedMap_FirstAndLast_Empty(t *testing.T) {
+	t.Parallel()
+
+	var m mapping.OrderedMap[string, int]
+
+	key, value, ok := m.First()
+	require.False(t, ok)
+	require.Zero(t, key)
+	require.Zero(t, value)
+
+	key, value, ok = m.Last()
+	require.False(t, ok)
+	require.Zero(t, key)
+	require.Zero(t, value)
 }

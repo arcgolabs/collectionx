@@ -22,9 +22,10 @@ type Trie[V any] struct {
 	size int
 }
 
-type keyValue[V any] struct {
-	key   string
-	value V
+// Entry is one key-value pair returned from trie queries.
+type Entry[V any] struct {
+	Key   string
+	Value V
 }
 
 // NewTrie creates an empty trie.
@@ -262,6 +263,22 @@ func (t *Trie[V]) ValuesWithPrefix(prefix string) []V {
 
 	out := make([]V, 0, startNode.valueCount)
 	t.collectValues(startNode, prefix, &out)
+	return out
+}
+
+// EntriesWithPrefix returns all key-value pairs that start with prefix.
+func (t *Trie[V]) EntriesWithPrefix(prefix string) []Entry[V] {
+	if t == nil || t.root == nil {
+		return nil
+	}
+
+	startNode, ok := t.findNode(prefix)
+	if !ok {
+		return nil
+	}
+
+	out := make([]Entry[V], 0, startNode.valueCount)
+	t.collectPairs(startNode, prefix, &out)
 	return out
 }
 

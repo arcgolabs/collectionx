@@ -48,6 +48,41 @@ func TestConcurrentMap_GetOrStore(t *testing.T) {
 	require.Equal(t, 1, value)
 }
 
+func TestConcurrentMap_GetOrSetAndGetOrCompute(t *testing.T) {
+	t.Parallel()
+
+	var m mapping.ConcurrentMap[string, int]
+
+	value, loaded := m.GetOrSet("a", 1)
+	require.False(t, loaded)
+	require.Equal(t, 1, value)
+
+	value, loaded = m.GetOrSet("a", 9)
+	require.True(t, loaded)
+	require.Equal(t, 1, value)
+
+	computeCalls := 0
+	value, loaded = m.GetOrCompute("b", func() int {
+		computeCalls++
+		return 2
+	})
+	require.False(t, loaded)
+	require.Equal(t, 2, value)
+	require.Equal(t, 1, computeCalls)
+
+	value, loaded = m.GetOrCompute("b", func() int {
+		computeCalls++
+		return 99
+	})
+	require.True(t, loaded)
+	require.Equal(t, 2, value)
+	require.Equal(t, 1, computeCalls)
+
+	value, loaded = new(mapping.ConcurrentMap[string, int]).GetOrCompute("x", nil)
+	require.False(t, loaded)
+	require.Zero(t, value)
+}
+
 func TestConcurrentMap_LoadAndDelete(t *testing.T) {
 	t.Parallel()
 

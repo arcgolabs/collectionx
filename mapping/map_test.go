@@ -88,6 +88,41 @@ func TestNewMapWithCapacity(t *testing.T) {
 	require.Equal(t, 1, m.GetOrDefault("a", 0))
 }
 
+func TestMap_GetOrSetAndGetOrCompute(t *testing.T) {
+	t.Parallel()
+
+	var m mapping.Map[string, int]
+
+	value, loaded := m.GetOrSet("a", 1)
+	require.False(t, loaded)
+	require.Equal(t, 1, value)
+
+	value, loaded = m.GetOrSet("a", 9)
+	require.True(t, loaded)
+	require.Equal(t, 1, value)
+
+	computeCalls := 0
+	value, loaded = m.GetOrCompute("b", func() int {
+		computeCalls++
+		return 2
+	})
+	require.False(t, loaded)
+	require.Equal(t, 2, value)
+	require.Equal(t, 1, computeCalls)
+
+	value, loaded = m.GetOrCompute("b", func() int {
+		computeCalls++
+		return 99
+	})
+	require.True(t, loaded)
+	require.Equal(t, 2, value)
+	require.Equal(t, 1, computeCalls)
+
+	value, loaded = new(mapping.Map[string, int]).GetOrCompute("x", nil)
+	require.False(t, loaded)
+	require.Zero(t, value)
+}
+
 func TestMap_ChainMethods(t *testing.T) {
 	t.Parallel()
 

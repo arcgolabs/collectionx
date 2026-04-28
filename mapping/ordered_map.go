@@ -88,6 +88,21 @@ func (m *OrderedMap[K, V]) At(pos int) (K, V, bool) {
 	return key, value, true
 }
 
+// First returns the first key-value pair in insertion order.
+func (m *OrderedMap[K, V]) First() (K, V, bool) {
+	return m.At(0)
+}
+
+// Last returns the last key-value pair in insertion order.
+func (m *OrderedMap[K, V]) Last() (K, V, bool) {
+	if m == nil || m.order.Len() == 0 {
+		var zeroK K
+		var zeroV V
+		return zeroK, zeroV, false
+	}
+	return m.At(m.order.Len() - 1)
+}
+
 // Delete removes key.
 func (m *OrderedMap[K, V]) Delete(key K) bool {
 	if m == nil {

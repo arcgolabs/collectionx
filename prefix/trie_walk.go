@@ -63,11 +63,11 @@ func walkPrefixValues[V any](node *trieNode[V], visit func(node *trieNode[V]) bo
 	return true
 }
 
-func (t *Trie[V]) collectPairs(node *trieNode[V], prefix string, out *[]keyValue[V]) {
+func (t *Trie[V]) collectPairs(node *trieNode[V], prefix string, out *[]Entry[V]) {
 	_ = walkPrefix(node, prefix, func(path []rune, node *trieNode[V]) bool {
-		*out = append(*out, keyValue[V]{
-			key:   string(path),
-			value: node.value,
+		*out = append(*out, Entry[V]{
+			Key:   string(path),
+			Value: node.value,
 		})
 		return true
 	})
@@ -94,7 +94,7 @@ func (t *Trie[V]) rangePrefix(node *trieNode[V], prefix string, fn func(key stri
 	})
 }
 
-func (t *Trie[V]) pairsWithPrefix(prefix string) []keyValue[V] {
+func (t *Trie[V]) pairsWithPrefix(prefix string) []Entry[V] {
 	if t == nil || t.root == nil {
 		return nil
 	}
@@ -103,7 +103,7 @@ func (t *Trie[V]) pairsWithPrefix(prefix string) []keyValue[V] {
 		return nil
 	}
 
-	out := make([]keyValue[V], 0, startNode.valueCount)
+	out := make([]Entry[V], 0, startNode.valueCount)
 	t.collectPairs(startNode, prefix, &out)
 	return out
 }

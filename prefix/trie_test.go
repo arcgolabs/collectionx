@@ -33,6 +33,11 @@ func TestTrie_PrefixAndDelete(t *testing.T) {
 	tr.Put("zoo", "v4")
 
 	require.Equal(t, []string{"go", "gone", "good"}, tr.KeysWithPrefix("go"))
+	require.Equal(t, []prefix.Entry[string]{
+		{Key: "go", Value: "v1"},
+		{Key: "gone", Value: "v2"},
+		{Key: "good", Value: "v3"},
+	}, tr.EntriesWithPrefix("go"))
 	require.Equal(t, 3, tr.CountPrefix("go"))
 	matchedKey, matchedValue, ok := tr.LongestPrefix("goodbye")
 	require.True(t, ok)
@@ -46,6 +51,16 @@ func TestTrie_PrefixAndDelete(t *testing.T) {
 	require.Equal(t, 0, tr.CountPrefix("go"))
 	require.Equal(t, 1, tr.Len())
 	require.Equal(t, 0, tr.DeletePrefix("missing"))
+}
+
+func TestTrie_EntriesWithPrefix_EmptyOrMissing(t *testing.T) {
+	t.Parallel()
+
+	var tr prefix.Trie[int]
+	require.Nil(t, tr.EntriesWithPrefix("go"))
+
+	tr.Put("cat", 1)
+	require.Nil(t, tr.EntriesWithPrefix("dog"))
 }
 
 func TestTrie_LongestPrefix_NotFound(t *testing.T) {

@@ -103,6 +103,32 @@ func (m *ConcurrentMap[K, V]) GetOrStore(key K, value V) (actual V, loaded bool)
 	return value, false
 }
 
+// GetOrSet returns existing value if key exists; otherwise stores and returns value.
+// loaded is true when key already exists.
+func (m *ConcurrentMap[K, V]) GetOrSet(key K, value V) (actual V, loaded bool) {
+	return m.GetOrStore(key, value)
+}
+
+// GetOrCompute returns existing value if key exists; otherwise computes, stores, and returns one.
+// loaded is true when key already exists.
+func (m *ConcurrentMap[K, V]) GetOrCompute(key K, compute func() V) (actual V, loaded bool) {
+	var zero V
+	if m == nil || compute == nil {
+		return zero, false
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.ensureInitLocked()
+
+	if existing, ok := m.core.Get(key); ok {
+		return existing, true
+	}
+	value := compute()
+	m.core.Set(key, value)
+	m.invalidateSerializationCacheLocked()
+	return value, false
+}
+
 // Delete removes key and reports whether it existed.
 func (m *ConcurrentMap[K, V]) Delete(key K) bool {
 	if m == nil {

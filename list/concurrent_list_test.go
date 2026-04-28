@@ -132,3 +132,59 @@ func TestConcurrentList_JSONCacheReturnsDefensiveCopy(t *testing.T) {
 	require.True(t, l.Set(1, 9))
 	require.Equal(t, `[1,9,3]`, l.String())
 }
+
+func TestConcurrentList_Reverse(t *testing.T) {
+	t.Parallel()
+
+	l := list.NewConcurrentList(1, 2, 3, 4)
+	reversed := l.Reverse()
+
+	require.Same(t, l, reversed)
+	require.Equal(t, []int{4, 3, 2, 1}, l.Values())
+}
+
+func TestConcurrentList_ChunkAndWindow(t *testing.T) {
+	t.Parallel()
+
+	l := list.NewConcurrentList(1, 2, 3, 4, 5)
+
+	chunks := l.Chunk(2)
+	require.Len(t, chunks, 3)
+	require.Equal(t, []int{1, 2}, chunks[0].Values())
+	require.Equal(t, []int{3, 4}, chunks[1].Values())
+	require.Equal(t, []int{5}, chunks[2].Values())
+
+	windows := l.Window(3)
+	require.Len(t, windows, 3)
+	require.Equal(t, []int{1, 2, 3}, windows[0].Values())
+	require.Equal(t, []int{2, 3, 4}, windows[1].Values())
+	require.Equal(t, []int{3, 4, 5}, windows[2].Values())
+
+	chunks[0].Set(0, 99)
+	windows[0].Set(0, 88)
+	require.Equal(t, []int{1, 2, 3, 4, 5}, l.Values())
+}
+
+func TestConcurrentList_BinarySearchFunc(t *testing.T) {
+	t.Parallel()
+
+	l := list.NewConcurrentList(1, 3, 5, 7, 9)
+	compare := func(item, target int) int {
+		switch {
+		case item < target:
+			return -1
+		case item > target:
+			return 1
+		default:
+			return 0
+		}
+	}
+
+	index, ok := l.BinarySearchFunc(7, compare)
+	require.True(t, ok)
+	require.Equal(t, 3, index)
+
+	index, ok = l.BinarySearchFunc(8, compare)
+	require.False(t, ok)
+	require.Equal(t, -1, index)
+}

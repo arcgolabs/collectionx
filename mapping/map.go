@@ -86,6 +86,38 @@ func (m *Map[K, V]) GetOrDefault(key K, fallback V) V {
 	return v
 }
 
+// GetOrSet returns existing value if key exists; otherwise stores and returns value.
+// loaded is true when key already exists.
+func (m *Map[K, V]) GetOrSet(key K, value V) (actual V, loaded bool) {
+	if m == nil {
+		return value, false
+	}
+	m.ensureInit()
+	if existing, ok := m.items[key]; ok {
+		return existing, true
+	}
+	m.items[key] = value
+	m.invalidateSerializationCache()
+	return value, false
+}
+
+// GetOrCompute returns existing value if key exists; otherwise computes, stores, and returns one.
+// loaded is true when key already exists.
+func (m *Map[K, V]) GetOrCompute(key K, compute func() V) (actual V, loaded bool) {
+	var zero V
+	if m == nil || compute == nil {
+		return zero, false
+	}
+	m.ensureInit()
+	if existing, ok := m.items[key]; ok {
+		return existing, true
+	}
+	value := compute()
+	m.items[key] = value
+	m.invalidateSerializationCache()
+	return value, false
+}
+
 // Delete removes key and reports whether it existed.
 func (m *Map[K, V]) Delete(key K) bool {
 	if m == nil || m.items == nil {

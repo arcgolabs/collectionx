@@ -15,7 +15,7 @@ func (t *Trie[V]) All() map[string]V {
 
 	out := make(map[string]V, len(pairs))
 	for _, item := range pairs {
-		out[item.key] = item.value
+		out[item.Key] = item.Value
 	}
 	return out
 }

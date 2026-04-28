@@ -194,6 +194,28 @@ func (t *Table[R, C, V]) Has(rowKey R, columnKey C) bool {
 	return ok
 }
 
+// HasRow reports whether rowKey exists and contains at least one cell.
+func (t *Table[R, C, V]) HasRow(rowKey R) bool {
+	if t == nil {
+		return false
+	}
+	row, ok := t.data.Get(rowKey)
+	return ok && len(row) > 0
+}
+
+// HasColumn reports whether columnKey exists in any row.
+func (t *Table[R, C, V]) HasColumn(columnKey C) bool {
+	if t == nil || t.data.Len() == 0 {
+		return false
+	}
+	found := false
+	t.data.Range(func(_ R, row map[C]V) bool {
+		_, found = row[columnKey]
+		return !found
+	})
+	return found
+}
+
 // RowCount returns total row count.
 func (t *Table[R, C, V]) RowCount() int {
 	if t == nil {
