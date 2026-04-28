@@ -73,11 +73,10 @@ tasks:
       - go test ./...
 
   release:tag-all:
-    desc: Create root and nested-module tags for VERSION
+    desc: Create nested-module tags for VERSION
     requires:
       vars: [VERSION]
     cmds:
-      - git tag v{{.VERSION}}
       - git tag bitset/v{{.VERSION}}
       - git tag disjointset/v{{.VERSION}}
       - git tag examples/v{{.VERSION}}
@@ -91,11 +90,10 @@ tasks:
       - git tag tree/v{{.VERSION}}
 
   release:push-all:
-    desc: Push root and nested-module tags for VERSION
+    desc: Push nested-module tags for VERSION
     requires:
       vars: [VERSION]
     cmds:
-      - git push origin v{{.VERSION}}
       - git push origin bitset/v{{.VERSION}}
       - git push origin disjointset/v{{.VERSION}}
       - git push origin examples/v{{.VERSION}}
@@ -109,7 +107,7 @@ tasks:
       - git push origin tree/v{{.VERSION}}
 
   release:publish:
-    desc: Create and push root and nested-module tags for VERSION
+    desc: Create and push nested-module tags for VERSION
     requires:
       vars: [VERSION]
     cmds:
