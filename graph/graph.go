@@ -18,6 +18,7 @@ type graphNode[K comparable, V any] struct {
 	value     V
 	neighbors map[K]struct{}
 	order     []K
+	visitMark uint64
 }
 
 // Graph stores nodes with adjacency relationships.
@@ -26,6 +27,12 @@ type Graph[K comparable, V any] struct {
 	nodes     map[K]*graphNode[K, V]
 	order     []K
 	edgeCount int
+
+	visitEpoch      uint64
+	indegreeScratch map[K]int
+	queueScratch    []K
+	stackScratch    []K
+	orderScratch    []K
 }
 
 // NewDirectedGraph creates an empty directed graph.
@@ -211,27 +218,32 @@ func (g *Graph[K, V]) BFS(start K, visit func(id K, value V) bool) {
 	if g == nil || g.nodes == nil || visit == nil {
 		return
 	}
-	if _, ok := g.nodes[start]; !ok {
+	startNode, ok := g.nodes[start]
+	if !ok {
 		return
 	}
 
-	visited := make(map[K]struct{}, len(g.nodes))
-	queue := []K{start}
-	visited[start] = struct{}{}
+	mark := g.nextVisitEpoch()
+	startNode.visitMark = mark
+	queue := g.queueScratch[:0]
+	queue = append(queue, start)
 	for head := 0; head < len(queue); head++ {
 		id := queue[head]
 		node := g.nodes[id]
 		if !visit(id, node.value) {
+			g.queueScratch = queue[:0]
 			return
 		}
 		for _, neighborID := range node.order {
-			if _, seen := visited[neighborID]; seen {
+			neighbor := g.nodes[neighborID]
+			if neighbor.visitMark == mark {
 				continue
 			}
-			visited[neighborID] = struct{}{}
+			neighbor.visitMark = mark
 			queue = append(queue, neighborID)
 		}
 	}
+	g.queueScratch = queue[:0]
 }
 
 // DFS iterates reachable nodes in depth-first pre-order until visit returns false.
@@ -239,31 +251,34 @@ func (g *Graph[K, V]) DFS(start K, visit func(id K, value V) bool) {
 	if g == nil || g.nodes == nil || visit == nil {
 		return
 	}
-	if _, ok := g.nodes[start]; !ok {
+	startNode, ok := g.nodes[start]
+	if !ok {
 		return
 	}
 
-	visited := make(map[K]struct{}, len(g.nodes))
-	stack := []K{start}
+	mark := g.nextVisitEpoch()
+	startNode.visitMark = mark
+	stack := g.stackScratch[:0]
+	stack = append(stack, start)
 	for len(stack) > 0 {
 		id := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
-		if _, seen := visited[id]; seen {
-			continue
-		}
-		visited[id] = struct{}{}
 
 		node := g.nodes[id]
 		if !visit(id, node.value) {
+			g.stackScratch = stack[:0]
 			return
 		}
 		for i := len(node.order) - 1; i >= 0; i-- {
 			neighborID := node.order[i]
-			if _, seen := visited[neighborID]; !seen {
+			neighbor := g.nodes[neighborID]
+			if neighbor.visitMark != mark {
+				neighbor.visitMark = mark
 				stack = append(stack, neighborID)
 			}
 		}
 	}
+	g.stackScratch = stack[:0]
 }
 
 // TopologicalSort returns node ids in topological order.
@@ -275,7 +290,10 @@ func (g *Graph[K, V]) TopologicalSort() ([]K, error) {
 		return nil, ErrTopologicalSortRequiresDirected
 	}
 
-	indegree := make(map[K]int, len(g.nodes))
+	if g.indegreeScratch == nil {
+		g.indegreeScratch = make(map[K]int, len(g.nodes))
+	}
+	indegree := g.indegreeScratch
 	for _, id := range g.order {
 		indegree[id] = 0
 	}
@@ -286,14 +304,14 @@ func (g *Graph[K, V]) TopologicalSort() ([]K, error) {
 		}
 	}
 
-	queue := make([]K, 0, len(g.nodes))
+	queue := g.queueScratch[:0]
 	for _, id := range g.order {
 		if indegree[id] == 0 {
 			queue = append(queue, id)
 		}
 	}
 
-	order := make([]K, 0, len(g.nodes))
+	order := g.orderScratch[:0]
 	for head := 0; head < len(queue); head++ {
 		id := queue[head]
 		order = append(order, id)
@@ -307,9 +325,14 @@ func (g *Graph[K, V]) TopologicalSort() ([]K, error) {
 	}
 
 	if len(order) != len(g.nodes) {
+		g.queueScratch = queue[:0]
+		g.orderScratch = order[:0]
 		return nil, ErrCycleDetected
 	}
-	return order, nil
+	out := slices.Clone(order)
+	g.queueScratch = queue[:0]
+	g.orderScratch = order[:0]
+	return out, nil
 }
 
 // Len returns total node count.
@@ -341,6 +364,11 @@ func (g *Graph[K, V]) Clear() {
 	g.nodes = nil
 	g.order = nil
 	g.edgeCount = 0
+	g.visitEpoch = 0
+	g.indegreeScratch = nil
+	g.queueScratch = nil
+	g.stackScratch = nil
+	g.orderScratch = nil
 }
 
 func (g *Graph[K, V]) ensureInit() {
@@ -349,12 +377,29 @@ func (g *Graph[K, V]) ensureInit() {
 	}
 }
 
+func (g *Graph[K, V]) nextVisitEpoch() uint64 {
+	g.visitEpoch++
+	if g.visitEpoch != 0 {
+		return g.visitEpoch
+	}
+	for _, id := range g.order {
+		if node := g.nodes[id]; node != nil {
+			node.visitMark = 0
+		}
+	}
+	g.visitEpoch = 1
+	return g.visitEpoch
+}
+
 func (g *Graph[K, V]) deleteNodeOrder(id K) {
 	for index, current := range g.order {
 		if current != id {
 			continue
 		}
-		g.order = append(g.order[:index], g.order[index+1:]...)
+		copy(g.order[index:], g.order[index+1:])
+		var zero K
+		g.order[len(g.order)-1] = zero
+		g.order = g.order[:len(g.order)-1]
 		return
 	}
 }
@@ -377,7 +422,10 @@ func (n *graphNode[K, V]) deleteNeighbor(id K) bool {
 		if current != id {
 			continue
 		}
-		n.order = append(n.order[:index], n.order[index+1:]...)
+		copy(n.order[index:], n.order[index+1:])
+		var zero K
+		n.order[len(n.order)-1] = zero
+		n.order = n.order[:len(n.order)-1]
 		break
 	}
 	return true

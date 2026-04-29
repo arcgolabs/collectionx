@@ -45,15 +45,24 @@ func (d *DisjointSet[T]) Find(item T) (T, bool) {
 	if d == nil || d.parent == nil {
 		return zero, false
 	}
-	parent, ok := d.parent[item]
+	root, ok := d.parent[item]
 	if !ok {
 		return zero, false
 	}
-	if parent == item {
-		return item, true
+
+	for {
+		parent := d.parent[root]
+		if parent == root {
+			break
+		}
+		root = parent
 	}
-	root, _ := d.Find(parent)
-	d.parent[item] = root
+
+	for item != root {
+		parent := d.parent[item]
+		d.parent[item] = root
+		item = parent
+	}
 	return root, true
 }
 

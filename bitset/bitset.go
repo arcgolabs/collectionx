@@ -40,6 +40,19 @@ func (b *BitSet) Add(bits ...int) {
 	if b == nil || len(bits) == 0 {
 		return
 	}
+	maxWordIndex := -1
+	for _, bit := range bits {
+		if bit < 0 {
+			continue
+		}
+		wordIndex := bit / 64
+		if wordIndex > maxWordIndex {
+			maxWordIndex = wordIndex
+		}
+	}
+	if maxWordIndex >= 0 {
+		b.ensureWord(maxWordIndex)
+	}
 	for _, bit := range bits {
 		b.Set(bit)
 	}
@@ -135,7 +148,7 @@ func (b *BitSet) Range(fn func(bit int) bool) {
 			if !fn(wordIndex*64 + offset) {
 				return
 			}
-			current &^= uint64(1) << offset
+			current &= current - 1
 		}
 	}
 }
@@ -144,10 +157,16 @@ func (b *BitSet) Range(fn func(bit int) bool) {
 func (b *BitSet) Union(other *BitSet) *BitSet {
 	maxWords := max(lenWords(b), lenWords(other))
 	out := &BitSet{words: make([]uint64, maxWords)}
+	lastNonZero := 0
 	for i := range maxWords {
-		out.words[i] = wordAt(b, i) | wordAt(other, i)
+		word := wordAt(b, i) | wordAt(other, i)
+		out.words[i] = word
+		out.count += bits.OnesCount64(word)
+		if word != 0 {
+			lastNonZero = i + 1
+		}
 	}
-	out.recount()
+	out.words = out.words[:lastNonZero]
 	return out
 }
 
@@ -155,23 +174,35 @@ func (b *BitSet) Union(other *BitSet) *BitSet {
 func (b *BitSet) Intersect(other *BitSet) *BitSet {
 	minWords := min(lenWords(b), lenWords(other))
 	out := &BitSet{words: make([]uint64, minWords)}
+	lastNonZero := 0
 	for i := range minWords {
-		out.words[i] = wordAt(b, i) & wordAt(other, i)
+		word := wordAt(b, i) & wordAt(other, i)
+		out.words[i] = word
+		out.count += bits.OnesCount64(word)
+		if word != 0 {
+			lastNonZero = i + 1
+		}
 	}
-	out.recount()
+	out.words = out.words[:lastNonZero]
 	return out
 }
 
 // Difference returns a new bitset with bits in b but not in other.
 func (b *BitSet) Difference(other *BitSet) *BitSet {
-	out := b.Clone()
-	if other == nil || len(other.words) == 0 || len(out.words) == 0 {
-		return out
+	if b == nil || len(b.words) == 0 {
+		return &BitSet{}
 	}
-	for i := range len(out.words) {
-		out.words[i] &^= wordAt(other, i)
+	out := &BitSet{words: make([]uint64, len(b.words))}
+	lastNonZero := 0
+	for i := range len(b.words) {
+		word := b.words[i] &^ wordAt(other, i)
+		out.words[i] = word
+		out.count += bits.OnesCount64(word)
+		if word != 0 {
+			lastNonZero = i + 1
+		}
 	}
-	out.recount()
+	out.words = out.words[:lastNonZero]
 	return out
 }
 
@@ -179,10 +210,16 @@ func (b *BitSet) Difference(other *BitSet) *BitSet {
 func (b *BitSet) SymmetricDifference(other *BitSet) *BitSet {
 	maxWords := max(lenWords(b), lenWords(other))
 	out := &BitSet{words: make([]uint64, maxWords)}
+	lastNonZero := 0
 	for i := range maxWords {
-		out.words[i] = wordAt(b, i) ^ wordAt(other, i)
+		word := wordAt(b, i) ^ wordAt(other, i)
+		out.words[i] = word
+		out.count += bits.OnesCount64(word)
+		if word != 0 {
+			lastNonZero = i + 1
+		}
 	}
-	out.recount()
+	out.words = out.words[:lastNonZero]
 	return out
 }
 
