@@ -186,11 +186,11 @@ func addRangeToSet[T cmp.Ordered](ranges []Range[T], input Range[T]) []Range[T] 
 		return append(ranges, input)
 	}
 	if ranges[first].Start > input.End {
-		return spliceRanges(ranges, first, first, input)
+		return replaceSliceRange(ranges, first, first, input)
 	}
 
 	merged, end := mergeSetRanges(ranges, first, input)
-	return spliceRanges(ranges, first, end, merged)
+	return replaceSliceRange(ranges, first, end, merged)
 }
 
 func findFirstRangeEndingAtOrAfter[T cmp.Ordered](ranges []Range[T], point T) int {
@@ -217,58 +217,51 @@ func mergeSetRanges[T cmp.Ordered](ranges []Range[T], first int, merged Range[T]
 }
 
 func removeRangeFromSet[T cmp.Ordered](ranges []Range[T], cut Range[T]) ([]Range[T], bool) {
+	oldLen := len(ranges)
 	first := findFirstRangeEndingAfter(ranges, cut.Start)
 	if first == len(ranges) {
 		return ranges, false
 	}
 
-	next := make([]Range[T], 0, len(ranges))
-	next = append(next, ranges[:first]...)
 	changed := false
+	write := first
 
 	for index := first; index < len(ranges); index++ {
 		current := ranges[index]
 		if current.Start >= cut.End {
-			next = append(next, ranges[index:]...)
-			return next, changed
+			if write != index {
+				copy(ranges[write:], ranges[index:])
+			}
+			return ranges[:write+len(ranges[index:])], changed
 		}
 
 		changed = true
-		fragments, stop := trimSetRange(current, cut)
-		next = append(next, fragments...)
-		if stop {
-			next = append(next, ranges[index+1:]...)
-			return next, changed
+		if current.Start < cut.Start {
+			ranges[write] = Range[T]{Start: current.Start, End: cut.Start}
+			write++
+		}
+		if cut.End < current.End {
+			if write == len(ranges) {
+				ranges = append(ranges, Range[T]{})
+			}
+			ranges[write] = Range[T]{Start: cut.End, End: current.End}
+			write++
+			tailCount := oldLen - (index + 1)
+			if tailCount > 0 {
+				copy(ranges[write:], ranges[index+1:oldLen])
+				write += tailCount
+			}
+			return ranges[:write], changed
 		}
 	}
 
-	return next, changed
+	return ranges[:write], changed
 }
 
 func findFirstRangeEndingAfter[T cmp.Ordered](ranges []Range[T], point T) int {
 	return sort.Search(len(ranges), func(i int) bool {
 		return ranges[i].End > point
 	})
-}
-
-func trimSetRange[T cmp.Ordered](current, cut Range[T]) ([]Range[T], bool) {
-	fragments := make([]Range[T], 0, 2)
-	if current.Start < cut.Start {
-		fragments = append(fragments, Range[T]{Start: current.Start, End: cut.Start})
-	}
-	if cut.End < current.End {
-		fragments = append(fragments, Range[T]{Start: cut.End, End: current.End})
-		return fragments, true
-	}
-	return fragments, false
-}
-
-func spliceRanges[T cmp.Ordered](ranges []Range[T], start, end int, replacement ...Range[T]) []Range[T] {
-	next := make([]Range[T], 0, len(ranges)-(end-start)+len(replacement))
-	next = append(next, ranges[:start]...)
-	next = append(next, replacement...)
-	next = append(next, ranges[end:]...)
-	return next
 }
 
 func (s *RangeSet[T]) invalidateDerivedCaches() {

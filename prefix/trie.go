@@ -48,24 +48,24 @@ func (t *Trie[V]) Put(key string, value V) bool {
 	t.ensureRoot()
 
 	node := t.root
-	path := []*trieNode[V]{node}
 	for _, ch := range key {
 		next, ok := node.children.Get(ch)
 		if !ok {
-			next = &trieNode[V]{}
-			node.children.Set(ch, next)
-			node.insertChildKey(ch)
+			return t.putNewKey(key, value)
 		}
 		node = next
-		path = append(path, node)
 	}
 
 	isNew := !node.hasValue
 	node.value = value
 	node.hasValue = true
 	if isNew {
-		for _, current := range path {
-			current.valueCount++
+		t.root.valueCount++
+		node = t.root
+		for _, ch := range key {
+			next, _ := node.children.Get(ch)
+			node = next
+			node.valueCount++
 		}
 		t.size++
 	}
@@ -163,12 +163,64 @@ func (t *Trie[V]) Delete(key string) bool {
 	if t == nil || t.root == nil {
 		return false
 	}
-	runes := []rune(key)
-	removed := t.deleteRec(t.root, runes, 0)
-	if removed {
+	if key == "" {
+		if !t.root.hasValue {
+			return false
+		}
+		t.root.hasValue = false
+		t.root.valueCount--
+		var zero V
+		t.root.value = zero
 		t.size--
+		return true
 	}
-	return removed
+
+	const stackInlineCap = 64
+	var nodeInline [stackInlineCap + 1]*trieNode[V]
+	var runeInline [stackInlineCap]rune
+	pathNodes := nodeInline[:1]
+	pathNodes[0] = t.root
+	pathRunes := runeInline[:0]
+
+	node := t.root
+	for _, ch := range key {
+		child, ok := node.children.Get(ch)
+		if !ok {
+			return false
+		}
+		if len(pathRunes) < cap(pathRunes) {
+			pathRunes = append(pathRunes, ch)
+			pathNodes = append(pathNodes, child)
+		} else {
+			pathRunes = append(slices.Clone(pathRunes), ch)
+			pathNodes = append(slices.Clone(pathNodes), child)
+		}
+		node = child
+	}
+	if !node.hasValue {
+		return false
+	}
+
+	node.hasValue = false
+	var zero V
+	node.value = zero
+	for _, current := range pathNodes {
+		current.valueCount--
+	}
+
+	for index := len(pathNodes) - 1; index > 0; index-- {
+		child := pathNodes[index]
+		if child.hasValue || child.children.Len() > 0 {
+			break
+		}
+		parent := pathNodes[index-1]
+		ch := pathRunes[index-1]
+		parent.children.Delete(ch)
+		parent.deleteChildKey(ch)
+	}
+
+	t.size--
+	return true
 }
 
 // DeletePrefix removes all keys that start with prefix and returns removed key count.
@@ -314,36 +366,22 @@ func (t *Trie[V]) findNode(key string) (*trieNode[V], bool) {
 	return node, true
 }
 
-func (t *Trie[V]) deleteRec(node *trieNode[V], runes []rune, depth int) bool {
-	if node == nil {
-		return false
-	}
-	if depth == len(runes) {
-		if !node.hasValue {
-			return false
+func (t *Trie[V]) putNewKey(key string, value V) bool {
+	node := t.root
+	node.valueCount++
+	for _, ch := range key {
+		next, ok := node.children.Get(ch)
+		if !ok {
+			next = &trieNode[V]{}
+			node.children.Set(ch, next)
+			node.insertChildKey(ch)
 		}
-		node.hasValue = false
-		node.valueCount--
-		var zero V
-		node.value = zero
-		return true
+		node = next
+		node.valueCount++
 	}
-
-	ch := runes[depth]
-	child, ok := node.children.Get(ch)
-	if !ok {
-		return false
-	}
-	removed := t.deleteRec(child, runes, depth+1)
-	if !removed {
-		return false
-	}
-
-	node.valueCount--
-	if !child.hasValue && child.children.Len() == 0 {
-		node.children.Delete(ch)
-		node.deleteChildKey(ch)
-	}
+	node.value = value
+	node.hasValue = true
+	t.size++
 	return true
 }
 

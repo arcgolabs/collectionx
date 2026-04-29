@@ -211,25 +211,24 @@ func putRangeEntry[T cmp.Ordered, V any](entries []RangeEntry[T, V], input Range
 		return append(entries, input)
 	}
 	if entries[first].Range.Start >= input.Range.End {
-		return spliceRangeEntries(entries, first, first, input)
+		return replaceSliceRange(entries, first, first, input)
 	}
 
-	replacement, end := buildPutRangeEntries(entries, first, input)
-	return spliceRangeEntries(entries, first, end, replacement...)
-}
-
-func buildPutRangeEntries[T cmp.Ordered, V any](entries []RangeEntry[T, V], first int, input RangeEntry[T, V]) ([]RangeEntry[T, V], int) {
-	replacement := make([]RangeEntry[T, V], 0, 3)
+	var replacement [3]RangeEntry[T, V]
+	replCount := 0
 	if left, ok := splitLeftRangeEntry(entries[first], input.Range.Start); ok {
-		replacement = append(replacement, left)
+		replacement[replCount] = left
+		replCount++
 	}
-	replacement = append(replacement, input)
+	replacement[replCount] = input
+	replCount++
 
 	end, right, ok := splitRightRangeEntry(entries, first, input.Range.End)
 	if ok {
-		replacement = append(replacement, right)
+		replacement[replCount] = right
+		replCount++
 	}
-	return replacement, end
+	return replaceSliceRange(entries, first, end, replacement[:replCount]...)
 }
 
 func findFirstRangeEntryEndingAfter[T cmp.Ordered, V any](entries []RangeEntry[T, V], point T) int {
@@ -265,58 +264,51 @@ func splitRightRangeEntry[T cmp.Ordered, V any](entries []RangeEntry[T, V], firs
 }
 
 func deleteRangeEntries[T cmp.Ordered, V any](entries []RangeEntry[T, V], cut Range[T]) ([]RangeEntry[T, V], bool) {
+	oldLen := len(entries)
 	first := findFirstRangeEntryEndingAfter(entries, cut.Start)
 	if first == len(entries) {
 		return entries, false
 	}
 
-	next := make([]RangeEntry[T, V], 0, len(entries))
-	next = append(next, entries[:first]...)
 	changed := false
+	write := first
 
 	for index := first; index < len(entries); index++ {
 		entry := entries[index]
 		if entry.Range.Start >= cut.End {
-			next = append(next, entries[index:]...)
-			return next, changed
+			if write != index {
+				copy(entries[write:], entries[index:])
+			}
+			return entries[:write+len(entries[index:])], changed
 		}
 
 		changed = true
-		fragments, stop := trimRangeEntry(entry, cut)
-		next = append(next, fragments...)
-		if stop {
-			next = append(next, entries[index+1:]...)
-			return next, changed
+		if entry.Range.Start < cut.Start {
+			entries[write] = RangeEntry[T, V]{
+				Range: Range[T]{Start: entry.Range.Start, End: cut.Start},
+				Value: entry.Value,
+			}
+			write++
+		}
+		if cut.End < entry.Range.End {
+			if write == len(entries) {
+				entries = append(entries, RangeEntry[T, V]{})
+			}
+			entries[write] = RangeEntry[T, V]{
+				Range: Range[T]{Start: cut.End, End: entry.Range.End},
+				Value: entry.Value,
+			}
+			write++
+			tailCount := oldLen - (index + 1)
+			if tailCount > 0 {
+				copy(entries[write:], entries[index+1:oldLen])
+				write += tailCount
+			}
+			return entries[:write], changed
 		}
 	}
 
-	return next, changed
-}
-
-func trimRangeEntry[T cmp.Ordered, V any](entry RangeEntry[T, V], cut Range[T]) ([]RangeEntry[T, V], bool) {
-	fragments := make([]RangeEntry[T, V], 0, 2)
-	if entry.Range.Start < cut.Start {
-		fragments = append(fragments, RangeEntry[T, V]{
-			Range: Range[T]{Start: entry.Range.Start, End: cut.Start},
-			Value: entry.Value,
-		})
-	}
-	if cut.End < entry.Range.End {
-		fragments = append(fragments, RangeEntry[T, V]{
-			Range: Range[T]{Start: cut.End, End: entry.Range.End},
-			Value: entry.Value,
-		})
-		return fragments, true
-	}
-	return fragments, false
-}
-
-func spliceRangeEntries[T cmp.Ordered, V any](entries []RangeEntry[T, V], start, end int, replacement ...RangeEntry[T, V]) []RangeEntry[T, V] {
-	next := make([]RangeEntry[T, V], 0, len(entries)-(end-start)+len(replacement))
-	next = append(next, entries[:start]...)
-	next = append(next, replacement...)
-	next = append(next, entries[end:]...)
-	return next
+	return entries[:write], changed
 }
 
 func (m *RangeMap[T, V]) invalidateDerivedCaches() {

@@ -4,7 +4,6 @@ package set
 
 import (
 	collectionmapping "github.com/arcgolabs/collectionx/mapping"
-	"github.com/samber/lo"
 	"github.com/samber/mo"
 )
 
@@ -41,9 +40,12 @@ func (s *Set[T]) Add(items ...T) {
 	if s == nil || len(items) == 0 {
 		return
 	}
-	lo.ForEach(items, func(item T, _ int) {
+	if s.items.Len() == 0 {
+		s.items = *collectionmapping.NewMapWithCapacity[T, struct{}](len(items))
+	}
+	for _, item := range items {
 		s.items.Set(item, struct{}{})
-	})
+	}
 	s.invalidateSerializationCache()
 }
 
@@ -54,6 +56,9 @@ func (s *Set[T]) Merge(other *Set[T]) *Set[T] {
 	}
 	if other == nil || other.items.Len() == 0 {
 		return s
+	}
+	if s.items.Len() == 0 {
+		s.items = *collectionmapping.NewMapWithCapacity[T, struct{}](other.items.Len())
 	}
 	other.Range(func(item T) bool {
 		s.items.Set(item, struct{}{})
@@ -140,12 +145,7 @@ func (s *Set[T]) Clone() *Set[T] {
 	if s == nil || s.items.Len() == 0 {
 		return &Set[T]{}
 	}
-	out := NewSetWithCapacity[T](s.Len())
-	s.Range(func(item T) bool {
-		out.items.Set(item, struct{}{})
-		return true
-	})
-	return out
+	return &Set[T]{items: *s.items.Clone()}
 }
 
 // Where returns a new set containing only items that match predicate.

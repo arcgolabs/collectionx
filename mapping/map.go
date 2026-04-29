@@ -161,9 +161,11 @@ func (m *Map[K, V]) Keys() []K {
 		return nil
 	}
 
-	keys := make([]K, 0, len(m.items))
+	keys := make([]K, len(m.items))
+	index := 0
 	for key := range m.items {
-		keys = append(keys, key)
+		keys[index] = key
+		index++
 	}
 	return keys
 }
@@ -174,9 +176,11 @@ func (m *Map[K, V]) Values() []V {
 		return nil
 	}
 
-	values := make([]V, 0, len(m.items))
+	values := make([]V, len(m.items))
+	index := 0
 	for _, value := range m.items {
-		values = append(values, value)
+		values[index] = value
+		index++
 	}
 	return values
 }
@@ -186,9 +190,7 @@ func (m *Map[K, V]) All() map[K]V {
 	if m == nil || len(m.items) == 0 {
 		return map[K]V{}
 	}
-	out := make(map[K]V, len(m.items))
-	maps.Copy(out, m.items)
-	return out
+	return maps.Clone(m.items)
 }
 
 // Range iterates all entries until fn returns false.
@@ -209,9 +211,7 @@ func (m *Map[K, V]) Clone() *Map[K, V] {
 		return NewMap[K, V]()
 	}
 
-	out := NewMapWithCapacity[K, V](len(m.items))
-	maps.Copy(out.items, m.items)
-	return out
+	return &Map[K, V]{items: maps.Clone(m.items)}
 }
 
 // WhereEntries returns a new map containing only entries that match predicate.

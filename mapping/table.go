@@ -101,9 +101,7 @@ func (t *Table[R, C, V]) Row(rowKey R) map[C]V {
 	if !ok || len(row) == 0 {
 		return map[C]V{}
 	}
-	out := make(map[C]V, len(row))
-	maps.Copy(out, row)
-	return out
+	return maps.Clone(row)
 }
 
 // Column returns one column as a copied map[row]value.
@@ -111,7 +109,7 @@ func (t *Table[R, C, V]) Column(columnKey C) map[R]V {
 	if t == nil || t.data.Len() == 0 {
 		return map[R]V{}
 	}
-	out := make(map[R]V)
+	out := make(map[R]V, t.data.Len())
 	t.data.Range(func(rowKey R, row map[C]V) bool {
 		if value, ok := row[columnKey]; ok {
 			out[rowKey] = value
@@ -292,9 +290,7 @@ func (t *Table[R, C, V]) All() map[R]map[C]V {
 	}
 	out := make(map[R]map[C]V, t.data.Len())
 	t.data.Range(func(rowKey R, row map[C]V) bool {
-		rowCopy := make(map[C]V, len(row))
-		maps.Copy(rowCopy, row)
-		out[rowKey] = rowCopy
+		out[rowKey] = maps.Clone(row)
 		return true
 	})
 	return out
