@@ -1,6 +1,7 @@
 package mapping_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	mapping "github.com/arcgolabs/collectionx/mapping"
@@ -127,7 +128,7 @@ func BenchmarkTableColumnKeys(b *testing.B) {
 	}
 }
 
-func BenchmarkOrderedMapToJSON(b *testing.B) {
+func BenchmarkOrderedMapMarshalJSON(b *testing.B) {
 	m := mapping.NewOrderedMapWithCapacity[int, int](benchMapKeySpace)
 	for i := range benchMapKeySpace {
 		m.Set(i, i)
@@ -136,13 +137,13 @@ func BenchmarkOrderedMapToJSON(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for range b.N {
-		if _, err := m.ToJSON(); err != nil {
-			b.Fatalf("ordered map to json failed: %v", err)
+		if _, err := json.Marshal(m); err != nil {
+			b.Fatalf("ordered map marshal json failed: %v", err)
 		}
 	}
 }
 
-func BenchmarkMultiMapToJSON(b *testing.B) {
+func BenchmarkMultiMapMarshalJSON(b *testing.B) {
 	m := mapping.NewMultiMapWithCapacity[int, int](benchMapKeySpace)
 	for key := range benchMapKeySpace {
 		for value := range benchMultiMapValueSeed {
@@ -153,13 +154,13 @@ func BenchmarkMultiMapToJSON(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for range b.N {
-		if _, err := m.ToJSON(); err != nil {
-			b.Fatalf("multimap to json failed: %v", err)
+		if _, err := json.Marshal(m); err != nil {
+			b.Fatalf("multimap marshal json failed: %v", err)
 		}
 	}
 }
 
-func BenchmarkTableToJSON(b *testing.B) {
+func BenchmarkTableMarshalJSON(b *testing.B) {
 	t := mapping.NewTable[int, int, int]()
 	for row := range benchTableDim {
 		for col := range benchTableDim {
@@ -170,13 +171,13 @@ func BenchmarkTableToJSON(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for range b.N {
-		if _, err := t.ToJSON(); err != nil {
-			b.Fatalf("table to json failed: %v", err)
+		if _, err := json.Marshal(t); err != nil {
+			b.Fatalf("table marshal json failed: %v", err)
 		}
 	}
 }
 
-func BenchmarkConcurrentMapToJSON(b *testing.B) {
+func BenchmarkConcurrentMapMarshalJSON(b *testing.B) {
 	m := mapping.NewConcurrentMap[int, int]()
 	for i := range benchMapKeySpace {
 		m.Set(i, i)
@@ -185,13 +186,13 @@ func BenchmarkConcurrentMapToJSON(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for range b.N {
-		if _, err := m.ToJSON(); err != nil {
-			b.Fatalf("concurrent map to json failed: %v", err)
+		if _, err := json.Marshal(m); err != nil {
+			b.Fatalf("concurrent map marshal json failed: %v", err)
 		}
 	}
 }
 
-func BenchmarkConcurrentTableToJSON(b *testing.B) {
+func BenchmarkConcurrentTableMarshalJSON(b *testing.B) {
 	t := mapping.NewConcurrentTable[int, int, int]()
 	for row := range benchTableDim {
 		for col := range benchTableDim {
@@ -202,8 +203,8 @@ func BenchmarkConcurrentTableToJSON(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for range b.N {
-		if _, err := t.ToJSON(); err != nil {
-			b.Fatalf("concurrent table to json failed: %v", err)
+		if _, err := json.Marshal(t); err != nil {
+			b.Fatalf("concurrent table marshal json failed: %v", err)
 		}
 	}
 }

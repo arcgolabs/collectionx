@@ -1,6 +1,7 @@
 package set_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	set "github.com/arcgolabs/collectionx/set"
@@ -109,13 +110,13 @@ func TestSet_JSONCacheReturnsDefensiveCopy(t *testing.T) {
 
 	s := set.NewSet(1)
 
-	data, err := s.ToJSON()
+	data, err := json.Marshal(s)
 	require.NoError(t, err)
 	require.Equal(t, `[1]`, string(data))
 	require.Equal(t, `[1]`, s.String())
 
 	data[0] = '{'
-	fresh, err := s.ToJSON()
+	fresh, err := json.Marshal(s)
 	require.NoError(t, err)
 	require.Equal(t, `[1]`, string(fresh))
 

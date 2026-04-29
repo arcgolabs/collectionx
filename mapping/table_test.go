@@ -1,6 +1,7 @@
 package mapping_test
 
 import (
+	"encoding/json"
 	"slices"
 	"testing"
 
@@ -167,13 +168,13 @@ func TestTable_JSONCacheReturnsDefensiveCopy(t *testing.T) {
 	tb := mapping.NewTable[string, string, int]()
 	tb.Put("r1", "c1", 1)
 
-	data, err := tb.ToJSON()
+	data, err := json.Marshal(tb)
 	require.NoError(t, err)
 	require.Equal(t, `{"r1":{"c1":1}}`, string(data))
 	require.Equal(t, `{"r1":{"c1":1}}`, tb.String())
 
 	data[0] = '['
-	fresh, err := tb.ToJSON()
+	fresh, err := json.Marshal(tb)
 	require.NoError(t, err)
 	require.Equal(t, `{"r1":{"c1":1}}`, string(fresh))
 

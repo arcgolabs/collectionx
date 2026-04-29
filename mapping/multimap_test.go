@@ -1,6 +1,7 @@
 package mapping_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	mapping "github.com/arcgolabs/collectionx/mapping"
@@ -124,13 +125,13 @@ func TestMultiMap_JSONCacheReturnsDefensiveCopy(t *testing.T) {
 	m := mapping.NewMultiMap[string, int]()
 	m.Put("a", 1)
 
-	data, err := m.ToJSON()
+	data, err := json.Marshal(m)
 	require.NoError(t, err)
 	require.Equal(t, `{"a":[1]}`, string(data))
 	require.Equal(t, `{"a":[1]}`, m.String())
 
 	data[0] = '['
-	fresh, err := m.ToJSON()
+	fresh, err := json.Marshal(m)
 	require.NoError(t, err)
 	require.Equal(t, `{"a":[1]}`, string(fresh))
 

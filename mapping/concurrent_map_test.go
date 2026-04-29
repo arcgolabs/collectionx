@@ -1,6 +1,7 @@
 package mapping_test
 
 import (
+	"encoding/json"
 	"strconv"
 	"sync"
 	"testing"
@@ -177,13 +178,13 @@ func TestConcurrentMap_JSONCacheReturnsDefensiveCopy(t *testing.T) {
 	m := mapping.NewConcurrentMap[string, int]()
 	m.Set("a", 1)
 
-	data, err := m.ToJSON()
+	data, err := json.Marshal(m)
 	require.NoError(t, err)
 	require.Equal(t, `{"a":1}`, string(data))
 	require.Equal(t, `{"a":1}`, m.String())
 
 	data[0] = '['
-	fresh, err := m.ToJSON()
+	fresh, err := json.Marshal(m)
 	require.NoError(t, err)
 	require.Equal(t, `{"a":1}`, string(fresh))
 

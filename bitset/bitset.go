@@ -58,6 +58,17 @@ func (b *BitSet) Add(bits ...int) {
 	}
 }
 
+// AddRange enables all bits in [start, end).
+func (b *BitSet) AddRange(start, end int) {
+	if b == nil || start < 0 || start >= end {
+		return
+	}
+	b.ensureWord((end - 1) / 64)
+	for bit := start; bit < end; bit++ {
+		b.Set(bit)
+	}
+}
+
 // Remove clears one bit and reports whether it existed.
 func (b *BitSet) Remove(bit int) bool {
 	if b == nil || bit < 0 {
@@ -75,6 +86,20 @@ func (b *BitSet) Remove(bit int) bool {
 	b.count--
 	b.trimTrailingZeros()
 	return true
+}
+
+// RemoveRange clears all bits in [start, end).
+func (b *BitSet) RemoveRange(start, end int) int {
+	if b == nil || start < 0 || start >= end || len(b.words) == 0 {
+		return 0
+	}
+	removed := 0
+	for bit := start; bit < end; bit++ {
+		if b.Remove(bit) {
+			removed++
+		}
+	}
+	return removed
 }
 
 // Contains reports whether bit exists.
@@ -151,6 +176,27 @@ func (b *BitSet) Range(fn func(bit int) bool) {
 			current &= current - 1
 		}
 	}
+}
+
+// NextSet returns the next set bit at or after bit.
+func (b *BitSet) NextSet(bit int) (int, bool) {
+	if b == nil || bit < 0 || len(b.words) == 0 {
+		return 0, false
+	}
+	wordIndex := bit / 64
+	if wordIndex >= len(b.words) {
+		return 0, false
+	}
+	current := b.words[wordIndex] &^ ((uint64(1) << (bit % 64)) - 1)
+	if current != 0 {
+		return wordIndex*64 + bits.TrailingZeros64(current), true
+	}
+	for wordIndex++; wordIndex < len(b.words); wordIndex++ {
+		if b.words[wordIndex] != 0 {
+			return wordIndex*64 + bits.TrailingZeros64(b.words[wordIndex]), true
+		}
+	}
+	return 0, false
 }
 
 // Union returns a new bitset containing bits from both sets.

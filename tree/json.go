@@ -12,34 +12,42 @@ type jsonNode[K comparable, V any] struct {
 	Children []jsonNode[K, V] `json:"children,omitempty"`
 }
 
-// ToJSON serializes tree roots and descendants to JSON.
-func (t *Tree[K, V]) ToJSON() ([]byte, error) {
+func (t *Tree[K, V]) marshalJSONBytes() ([]byte, error) {
 	return marshalTreeJSON("tree", t.toJSONNodes())
 }
 
 // MarshalJSON implements json.Marshaler.
 func (t *Tree[K, V]) MarshalJSON() ([]byte, error) {
-	return forwardTreeJSON("tree", t.ToJSON)
+	data, err := t.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal tree JSON: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
 func (t *Tree[K, V]) String() string {
-	return common.StringFromToJSON(t.ToJSON, "[]")
+	data, err := t.marshalJSONBytes()
+	return common.JSONResultString(data, err, "[]")
 }
 
-// ToJSON serializes concurrent tree snapshot to JSON.
-func (t *ConcurrentTree[K, V]) ToJSON() ([]byte, error) {
-	return t.Snapshot().ToJSON()
+func (t *ConcurrentTree[K, V]) marshalJSONBytes() ([]byte, error) {
+	return t.Snapshot().marshalJSONBytes()
 }
 
 // MarshalJSON implements json.Marshaler.
 func (t *ConcurrentTree[K, V]) MarshalJSON() ([]byte, error) {
-	return forwardTreeJSON("concurrent tree", t.ToJSON)
+	data, err := t.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal concurrent tree JSON: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
 func (t *ConcurrentTree[K, V]) String() string {
-	return common.StringFromToJSON(t.ToJSON, "[]")
+	data, err := t.marshalJSONBytes()
+	return common.JSONResultString(data, err, "[]")
 }
 
 func (t *Tree[K, V]) toJSONNodes() []jsonNode[K, V] {
@@ -80,15 +88,6 @@ func toJSONNode[K comparable, V any](node *Node[K, V]) jsonNode[K, V] {
 
 func marshalTreeJSON[T any](kind string, value T) ([]byte, error) {
 	data, err := common.MarshalJSONValue(value)
-	if err != nil {
-		return nil, fmt.Errorf("marshal %s JSON: %w", kind, err)
-	}
-
-	return data, nil
-}
-
-func forwardTreeJSON(kind string, fn func() ([]byte, error)) ([]byte, error) {
-	data, err := common.ForwardToJSON(fn)
 	if err != nil {
 		return nil, fmt.Errorf("marshal %s JSON: %w", kind, err)
 	}

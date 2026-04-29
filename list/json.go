@@ -8,8 +8,7 @@ import (
 	common "github.com/arcgolabs/collectionx/internal"
 )
 
-// ToJSON serializes list values to JSON.
-func (l *List[T]) ToJSON() ([]byte, error) {
+func (l *List[T]) marshalJSONBytes() ([]byte, error) {
 	if l != nil && !l.jsonDirty && l.jsonCache != nil {
 		return slices.Clone(l.jsonCache), nil
 	}
@@ -34,7 +33,11 @@ func (l *List[T]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (l *List[T]) MarshalJSON() ([]byte, error) {
-	return forwardListJSON(l.ToJSON, "list")
+	data, err := l.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal list: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
@@ -42,42 +45,49 @@ func (l *List[T]) String() string {
 	if l != nil && !l.jsonDirty && l.stringCache != "" {
 		return l.stringCache
 	}
-	data, err := l.ToJSON()
+	data, err := l.marshalJSONBytes()
 	return common.JSONResultString(data, err, "[]")
 }
 
-// ToJSON serializes grid rows to JSON.
-func (g *Grid[T]) ToJSON() ([]byte, error) {
+func (g *Grid[T]) marshalJSONBytes() ([]byte, error) {
 	return marshalListJSON(g.Values(), "grid")
 }
 
 // MarshalJSON implements json.Marshaler.
 func (g *Grid[T]) MarshalJSON() ([]byte, error) {
-	return forwardListJSON(g.ToJSON, "grid")
+	data, err := g.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal grid: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
 func (g *Grid[T]) String() string {
-	return common.StringFromToJSON(g.ToJSON, "[]")
+	data, err := g.marshalJSONBytes()
+	return common.JSONResultString(data, err, "[]")
 }
 
-// ToJSON serializes concurrent grid rows to JSON.
-func (g *ConcurrentGrid[T]) ToJSON() ([]byte, error) {
+func (g *ConcurrentGrid[T]) marshalJSONBytes() ([]byte, error) {
 	return marshalListJSON(g.Values(), "concurrent grid")
 }
 
 // MarshalJSON implements json.Marshaler.
 func (g *ConcurrentGrid[T]) MarshalJSON() ([]byte, error) {
-	return forwardListJSON(g.ToJSON, "concurrent grid")
+	data, err := g.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal concurrent grid: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
 func (g *ConcurrentGrid[T]) String() string {
-	return common.StringFromToJSON(g.ToJSON, "[]")
+	data, err := g.marshalJSONBytes()
+	return common.JSONResultString(data, err, "[]")
 }
 
-// ToJSON serializes concurrent list values to JSON.
-func (l *ConcurrentList[T]) ToJSON() ([]byte, error) {
+func (l *ConcurrentList[T]) marshalJSONBytes() ([]byte, error) {
 	if l == nil {
 		return marshalListJSON([]T(nil), "concurrent list")
 	}
@@ -116,7 +126,11 @@ func (l *ConcurrentList[T]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (l *ConcurrentList[T]) MarshalJSON() ([]byte, error) {
-	return forwardListJSON(l.ToJSON, "concurrent list")
+	data, err := l.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal concurrent list: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
@@ -131,112 +145,128 @@ func (l *ConcurrentList[T]) String() string {
 		return value
 	}
 	l.mu.RUnlock()
-	data, err := l.ToJSON()
+	data, err := l.marshalJSONBytes()
 	return common.JSONResultString(data, err, "[]")
 }
 
-// ToJSON serializes deque values to JSON.
-func (d *Deque[T]) ToJSON() ([]byte, error) {
+func (d *Deque[T]) marshalJSONBytes() ([]byte, error) {
 	return marshalListJSON(d.Values(), "deque")
 }
 
 // MarshalJSON implements json.Marshaler.
 func (d *Deque[T]) MarshalJSON() ([]byte, error) {
-	return forwardListJSON(d.ToJSON, "deque")
+	data, err := d.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal deque: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
 func (d *Deque[T]) String() string {
-	return common.StringFromToJSON(d.ToJSON, "[]")
+	data, err := d.marshalJSONBytes()
+	return common.JSONResultString(data, err, "[]")
 }
 
-// ToJSON serializes concurrent-deque values to JSON.
-func (d *ConcurrentDeque[T]) ToJSON() ([]byte, error) {
+func (d *ConcurrentDeque[T]) marshalJSONBytes() ([]byte, error) {
 	return marshalListJSON(d.Values(), "concurrent deque")
 }
 
 // MarshalJSON implements json.Marshaler.
 func (d *ConcurrentDeque[T]) MarshalJSON() ([]byte, error) {
-	return forwardListJSON(d.ToJSON, "concurrent deque")
+	data, err := d.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal concurrent deque: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
 func (d *ConcurrentDeque[T]) String() string {
-	return common.StringFromToJSON(d.ToJSON, "[]")
+	data, err := d.marshalJSONBytes()
+	return common.JSONResultString(data, err, "[]")
 }
 
-// ToJSON serializes ring-buffer values to JSON.
-func (r *RingBuffer[T]) ToJSON() ([]byte, error) {
+func (r *RingBuffer[T]) marshalJSONBytes() ([]byte, error) {
 	return marshalListJSON(r.Values(), "ring buffer")
 }
 
 // MarshalJSON implements json.Marshaler.
 func (r *RingBuffer[T]) MarshalJSON() ([]byte, error) {
-	return forwardListJSON(r.ToJSON, "ring buffer")
+	data, err := r.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal ring buffer: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
 func (r *RingBuffer[T]) String() string {
-	return common.StringFromToJSON(r.ToJSON, "[]")
+	data, err := r.marshalJSONBytes()
+	return common.JSONResultString(data, err, "[]")
 }
 
-// ToJSON serializes concurrent-ring-buffer values to JSON.
-func (r *ConcurrentRingBuffer[T]) ToJSON() ([]byte, error) {
+func (r *ConcurrentRingBuffer[T]) marshalJSONBytes() ([]byte, error) {
 	return marshalListJSON(r.Values(), "concurrent ring buffer")
 }
 
 // MarshalJSON implements json.Marshaler.
 func (r *ConcurrentRingBuffer[T]) MarshalJSON() ([]byte, error) {
-	return forwardListJSON(r.ToJSON, "concurrent ring buffer")
+	data, err := r.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal concurrent ring buffer: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
 func (r *ConcurrentRingBuffer[T]) String() string {
-	return common.StringFromToJSON(r.ToJSON, "[]")
+	data, err := r.marshalJSONBytes()
+	return common.JSONResultString(data, err, "[]")
 }
 
-// ToJSON serializes rope list values to JSON.
-func (r *RopeList[T]) ToJSON() ([]byte, error) {
+func (r *RopeList[T]) marshalJSONBytes() ([]byte, error) {
 	return marshalListJSON(r.Values(), "rope list")
 }
 
 // MarshalJSON implements json.Marshaler.
 func (r *RopeList[T]) MarshalJSON() ([]byte, error) {
-	return forwardListJSON(r.ToJSON, "rope list")
+	data, err := r.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal rope list: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
 func (r *RopeList[T]) String() string {
-	return common.StringFromToJSON(r.ToJSON, "[]")
+	data, err := r.marshalJSONBytes()
+	return common.JSONResultString(data, err, "[]")
 }
 
-// ToJSON serializes priority queue values to JSON in sorted priority order.
-func (pq *PriorityQueue[T]) ToJSON() ([]byte, error) {
+func (pq *PriorityQueue[T]) marshalJSONBytes() ([]byte, error) {
 	return marshalListJSON(pq.ValuesSorted(), "priority queue")
 }
 
 // MarshalJSON implements json.Marshaler.
 func (pq *PriorityQueue[T]) MarshalJSON() ([]byte, error) {
-	return forwardListJSON(pq.ToJSON, "priority queue")
+	data, err := pq.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal priority queue: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
 func (pq *PriorityQueue[T]) String() string {
-	return common.StringFromToJSON(pq.ToJSON, "[]")
+	data, err := pq.marshalJSONBytes()
+	return common.JSONResultString(data, err, "[]")
 }
 
 func marshalListJSON(value any, kind string) ([]byte, error) {
 	data, err := json.Marshal(value)
 	if err != nil {
 		return nil, fmt.Errorf("marshal %s json: %w", kind, err)
-	}
-	return data, nil
-}
-
-func forwardListJSON(toJSON func() ([]byte, error), kind string) ([]byte, error) {
-	data, err := common.ForwardToJSON(toJSON)
-	if err != nil {
-		return nil, fmt.Errorf("marshal %s: %w", kind, err)
 	}
 	return data, nil
 }

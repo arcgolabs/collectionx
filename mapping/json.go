@@ -11,8 +11,7 @@ import (
 	common "github.com/arcgolabs/collectionx/internal"
 )
 
-// ToJSON serializes map entries to JSON.
-func (m *Map[K, V]) ToJSON() ([]byte, error) {
+func (m *Map[K, V]) marshalJSONBytes() ([]byte, error) {
 	if m != nil && !m.jsonDirty && m.jsonCache != nil {
 		return slices.Clone(m.jsonCache), nil
 	}
@@ -37,7 +36,11 @@ func (m *Map[K, V]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (m *Map[K, V]) MarshalJSON() ([]byte, error) {
-	return forwardMappingJSON(m.ToJSON, "map")
+	data, err := m.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal map: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
@@ -45,12 +48,11 @@ func (m *Map[K, V]) String() string {
 	if m != nil && !m.jsonDirty && m.stringCache != "" {
 		return m.stringCache
 	}
-	data, err := m.ToJSON()
+	data, err := m.marshalJSONBytes()
 	return common.JSONResultString(data, err, "{}")
 }
 
-// ToJSON serializes concurrent map entries to JSON.
-func (m *ConcurrentMap[K, V]) ToJSON() ([]byte, error) {
+func (m *ConcurrentMap[K, V]) marshalJSONBytes() ([]byte, error) {
 	if m == nil {
 		return marshalMappingJSON(map[K]V{}, "concurrent map")
 	}
@@ -89,7 +91,11 @@ func (m *ConcurrentMap[K, V]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (m *ConcurrentMap[K, V]) MarshalJSON() ([]byte, error) {
-	return forwardMappingJSON(m.ToJSON, "concurrent map")
+	data, err := m.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal concurrent map: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
@@ -104,27 +110,30 @@ func (m *ConcurrentMap[K, V]) String() string {
 		return value
 	}
 	m.mu.RUnlock()
-	data, err := m.ToJSON()
+	data, err := m.marshalJSONBytes()
 	return common.JSONResultString(data, err, "{}")
 }
 
-// ToJSON serializes sharded concurrent map entries to JSON.
-func (m *ShardedConcurrentMap[K, V]) ToJSON() ([]byte, error) {
+func (m *ShardedConcurrentMap[K, V]) marshalJSONBytes() ([]byte, error) {
 	return marshalMappingJSON(m.All(), "sharded concurrent map")
 }
 
 // MarshalJSON implements json.Marshaler.
 func (m *ShardedConcurrentMap[K, V]) MarshalJSON() ([]byte, error) {
-	return forwardMappingJSON(m.ToJSON, "sharded concurrent map")
+	data, err := m.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal sharded concurrent map: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
 func (m *ShardedConcurrentMap[K, V]) String() string {
-	return common.StringFromToJSON(m.ToJSON, "{}")
+	data, err := m.marshalJSONBytes()
+	return common.JSONResultString(data, err, "{}")
 }
 
-// ToJSON serializes bidirectional map entries to JSON.
-func (m *BiMap[K, V]) ToJSON() ([]byte, error) {
+func (m *BiMap[K, V]) marshalJSONBytes() ([]byte, error) {
 	if m == nil || len(m.kv.items) == 0 {
 		return marshalMappingJSON(map[K]V{}, "bimap")
 	}
@@ -133,16 +142,20 @@ func (m *BiMap[K, V]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (m *BiMap[K, V]) MarshalJSON() ([]byte, error) {
-	return forwardMappingJSON(m.ToJSON, "bimap")
+	data, err := m.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal bimap: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
 func (m *BiMap[K, V]) String() string {
-	return common.StringFromToJSON(m.ToJSON, "{}")
+	data, err := m.marshalJSONBytes()
+	return common.JSONResultString(data, err, "{}")
 }
 
-// ToJSON serializes ordered map entries to JSON.
-func (m *OrderedMap[K, V]) ToJSON() ([]byte, error) {
+func (m *OrderedMap[K, V]) marshalJSONBytes() ([]byte, error) {
 	if m != nil && !m.jsonDirty && m.jsonCache != nil {
 		return slices.Clone(m.jsonCache), nil
 	}
@@ -158,7 +171,11 @@ func (m *OrderedMap[K, V]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (m *OrderedMap[K, V]) MarshalJSON() ([]byte, error) {
-	return forwardMappingJSON(m.ToJSON, "ordered map")
+	data, err := m.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal ordered map: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
@@ -166,12 +183,11 @@ func (m *OrderedMap[K, V]) String() string {
 	if m != nil && !m.jsonDirty && m.stringCache != "" {
 		return m.stringCache
 	}
-	data, err := m.ToJSON()
+	data, err := m.marshalJSONBytes()
 	return common.JSONResultString(data, err, "{}")
 }
 
-// ToJSON serializes multimap entries to JSON.
-func (m *MultiMap[K, V]) ToJSON() ([]byte, error) {
+func (m *MultiMap[K, V]) marshalJSONBytes() ([]byte, error) {
 	if m != nil && !m.jsonDirty && m.jsonCache != nil {
 		return slices.Clone(m.jsonCache), nil
 	}
@@ -187,7 +203,11 @@ func (m *MultiMap[K, V]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (m *MultiMap[K, V]) MarshalJSON() ([]byte, error) {
-	return forwardMappingJSON(m.ToJSON, "multimap")
+	data, err := m.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal multimap: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
@@ -195,12 +215,11 @@ func (m *MultiMap[K, V]) String() string {
 	if m != nil && !m.jsonDirty && m.stringCache != "" {
 		return m.stringCache
 	}
-	data, err := m.ToJSON()
+	data, err := m.marshalJSONBytes()
 	return common.JSONResultString(data, err, "{}")
 }
 
-// ToJSON serializes concurrent multimap entries to JSON.
-func (m *ConcurrentMultiMap[K, V]) ToJSON() ([]byte, error) {
+func (m *ConcurrentMultiMap[K, V]) marshalJSONBytes() ([]byte, error) {
 	if m == nil {
 		return marshalMappingJSON(map[K][]V{}, "concurrent multimap")
 	}
@@ -239,7 +258,11 @@ func (m *ConcurrentMultiMap[K, V]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (m *ConcurrentMultiMap[K, V]) MarshalJSON() ([]byte, error) {
-	return forwardMappingJSON(m.ToJSON, "concurrent multimap")
+	data, err := m.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal concurrent multimap: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
@@ -254,12 +277,11 @@ func (m *ConcurrentMultiMap[K, V]) String() string {
 		return value
 	}
 	m.mu.RUnlock()
-	data, err := m.ToJSON()
+	data, err := m.marshalJSONBytes()
 	return common.JSONResultString(data, err, "{}")
 }
 
-// ToJSON serializes table cells to JSON.
-func (t *Table[R, C, V]) ToJSON() ([]byte, error) {
+func (t *Table[R, C, V]) marshalJSONBytes() ([]byte, error) {
 	if t != nil && !t.jsonDirty && t.jsonCache != nil {
 		return slices.Clone(t.jsonCache), nil
 	}
@@ -275,7 +297,11 @@ func (t *Table[R, C, V]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (t *Table[R, C, V]) MarshalJSON() ([]byte, error) {
-	return forwardMappingJSON(t.ToJSON, "table")
+	data, err := t.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal table: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
@@ -283,12 +309,11 @@ func (t *Table[R, C, V]) String() string {
 	if t != nil && !t.jsonDirty && t.stringCache != "" {
 		return t.stringCache
 	}
-	data, err := t.ToJSON()
+	data, err := t.marshalJSONBytes()
 	return common.JSONResultString(data, err, "{}")
 }
 
-// ToJSON serializes concurrent table cells to JSON.
-func (t *ConcurrentTable[R, C, V]) ToJSON() ([]byte, error) {
+func (t *ConcurrentTable[R, C, V]) marshalJSONBytes() ([]byte, error) {
 	if t == nil {
 		return marshalMappingJSON(map[R]map[C]V{}, "concurrent table")
 	}
@@ -327,7 +352,11 @@ func (t *ConcurrentTable[R, C, V]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (t *ConcurrentTable[R, C, V]) MarshalJSON() ([]byte, error) {
-	return forwardMappingJSON(t.ToJSON, "concurrent table")
+	data, err := t.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal concurrent table: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
@@ -342,7 +371,7 @@ func (t *ConcurrentTable[R, C, V]) String() string {
 		return value
 	}
 	t.mu.RUnlock()
-	data, err := t.ToJSON()
+	data, err := t.marshalJSONBytes()
 	return common.JSONResultString(data, err, "{}")
 }
 
@@ -350,14 +379,6 @@ func marshalMappingJSON(value any, kind string) ([]byte, error) {
 	data, err := json.Marshal(value)
 	if err != nil {
 		return nil, fmt.Errorf("marshal %s json: %w", kind, err)
-	}
-	return data, nil
-}
-
-func forwardMappingJSON(toJSON func() ([]byte, error), kind string) ([]byte, error) {
-	data, err := common.ForwardToJSON(toJSON)
-	if err != nil {
-		return nil, fmt.Errorf("marshal %s: %w", kind, err)
 	}
 	return data, nil
 }

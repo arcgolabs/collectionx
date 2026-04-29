@@ -60,7 +60,7 @@ Most structures can be passed directly to standard library serializers:
 - `gob.NewEncoder(...).Encode(...)` / `Decode(...)`
 - `MarshalBinary` / `UnmarshalBinary`
 
-You do not need to call a separate snapshot helper first. `ToJSON()` is still available when you explicitly want raw JSON bytes for logs, debugging, or custom transport code.
+You do not need to call a separate snapshot helper first.
 
 Typical usage:
 

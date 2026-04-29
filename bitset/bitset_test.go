@@ -55,3 +55,26 @@ func TestBitSet_RangeAndClear(t *testing.T) {
 	require.True(t, b.IsEmpty())
 	require.Nil(t, b.Values())
 }
+
+func TestBitSet_RangeHelpers(t *testing.T) {
+	t.Parallel()
+
+	var b bitset.BitSet
+	b.AddRange(2, 6)
+	require.Equal(t, []int{2, 3, 4, 5}, b.Values())
+
+	removed := b.RemoveRange(3, 5)
+	require.Equal(t, 2, removed)
+	require.Equal(t, []int{2, 5}, b.Values())
+
+	next, ok := b.NextSet(0)
+	require.True(t, ok)
+	require.Equal(t, 2, next)
+
+	next, ok = b.NextSet(3)
+	require.True(t, ok)
+	require.Equal(t, 5, next)
+
+	_, ok = b.NextSet(6)
+	require.False(t, ok)
+}

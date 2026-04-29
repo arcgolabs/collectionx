@@ -166,6 +166,34 @@ func (d *DisjointSet[T]) Groups() map[T][]T {
 	return groups
 }
 
+// MembersOf returns all members in the set containing item.
+func (d *DisjointSet[T]) MembersOf(item T) []T {
+	root, ok := d.Find(item)
+	if !ok {
+		return nil
+	}
+	members := make([]T, 0, d.size[root])
+	for current := range d.parent {
+		currentRoot, _ := d.Find(current)
+		if currentRoot == root {
+			members = append(members, current)
+		}
+	}
+	return members
+}
+
+// RangeGroups iterates current groups until fn returns false.
+func (d *DisjointSet[T]) RangeGroups(fn func(root T, members []T) bool) {
+	if d == nil || len(d.parent) == 0 || fn == nil {
+		return
+	}
+	for root, members := range d.Groups() {
+		if !fn(root, members) {
+			return
+		}
+	}
+}
+
 func (d *DisjointSet[T]) ensureInit() {
 	if d.parent == nil {
 		d.parent = make(map[T]T)

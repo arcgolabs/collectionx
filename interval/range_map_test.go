@@ -1,6 +1,7 @@
 package interval_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/arcgolabs/collectionx/interval"
@@ -126,13 +127,13 @@ func TestRangeMap_CachesReturnDefensiveCopies(t *testing.T) {
 		{Range: interval.Range[int]{Start: 1, End: 3}, Value: "A"},
 	}, m.Entries())
 
-	data, err := m.ToJSON()
+	data, err := json.Marshal(m)
 	require.NoError(t, err)
 	require.Equal(t, `[{"Range":{"Start":1,"End":3},"Value":"A"}]`, string(data))
 	require.Equal(t, `[{"Range":{"Start":1,"End":3},"Value":"A"}]`, m.String())
 
 	data[0] = '{'
-	fresh, err := m.ToJSON()
+	fresh, err := json.Marshal(m)
 	require.NoError(t, err)
 	require.Equal(t, `[{"Range":{"Start":1,"End":3},"Value":"A"}]`, string(fresh))
 }

@@ -83,3 +83,35 @@ func TestGraph_TopologicalSortAndErrors(t *testing.T) {
 	err = directed.AddEdge(1, 9)
 	require.ErrorIs(t, err, graph.ErrNodeNotFound)
 }
+
+func TestGraph_RangeAndPathExists(t *testing.T) {
+	t.Parallel()
+
+	g := graph.NewDirectedGraph[int, string]()
+	g.AddNode(1, "a")
+	g.AddNode(2, "b")
+	g.AddNode(3, "c")
+	g.AddNode(4, "d")
+	require.NoError(t, g.AddEdge(1, 2))
+	require.NoError(t, g.AddEdge(2, 3))
+	require.NoError(t, g.AddEdge(1, 4))
+
+	var nodes []int
+	g.RangeNodes(func(id int, _ string) bool {
+		nodes = append(nodes, id)
+		return true
+	})
+	require.Equal(t, []int{1, 2, 3, 4}, nodes)
+
+	var edges [][2]int
+	g.RangeEdges(func(from, to int) bool {
+		edges = append(edges, [2]int{from, to})
+		return true
+	})
+	require.Equal(t, [][2]int{{1, 2}, {1, 4}, {2, 3}}, edges)
+
+	require.True(t, g.PathExists(1, 3))
+	require.True(t, g.PathExists(1, 4))
+	require.False(t, g.PathExists(4, 1))
+	require.False(t, g.PathExists(1, 9))
+}

@@ -7,8 +7,7 @@ import (
 	common "github.com/arcgolabs/collectionx/internal"
 )
 
-// ToJSON serializes normalized ranges to JSON.
-func (s *RangeSet[T]) ToJSON() ([]byte, error) {
+func (s *RangeSet[T]) marshalJSONBytes() ([]byte, error) {
 	if s != nil && !s.jsonDirty && s.jsonCache != nil {
 		return slices.Clone(s.jsonCache), nil
 	}
@@ -26,7 +25,7 @@ func (s *RangeSet[T]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (s *RangeSet[T]) MarshalJSON() ([]byte, error) {
-	data, err := common.ForwardToJSON(s.ToJSON)
+	data, err := s.marshalJSONBytes()
 	if err != nil {
 		return nil, fmt.Errorf("marshal range set: %w", err)
 	}
@@ -38,12 +37,11 @@ func (s *RangeSet[T]) String() string {
 	if s != nil && !s.jsonDirty && s.stringCache != "" {
 		return s.stringCache
 	}
-	data, err := s.ToJSON()
+	data, err := s.marshalJSONBytes()
 	return common.JSONResultString(data, err, "[]")
 }
 
-// ToJSON serializes range-map entries to JSON.
-func (m *RangeMap[T, V]) ToJSON() ([]byte, error) {
+func (m *RangeMap[T, V]) marshalJSONBytes() ([]byte, error) {
 	if m != nil && !m.jsonDirty && m.jsonCache != nil {
 		return slices.Clone(m.jsonCache), nil
 	}
@@ -61,7 +59,7 @@ func (m *RangeMap[T, V]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (m *RangeMap[T, V]) MarshalJSON() ([]byte, error) {
-	data, err := common.ForwardToJSON(m.ToJSON)
+	data, err := m.marshalJSONBytes()
 	if err != nil {
 		return nil, fmt.Errorf("marshal range map: %w", err)
 	}
@@ -73,6 +71,6 @@ func (m *RangeMap[T, V]) String() string {
 	if m != nil && !m.jsonDirty && m.stringCache != "" {
 		return m.stringCache
 	}
-	data, err := m.ToJSON()
+	data, err := m.marshalJSONBytes()
 	return common.JSONResultString(data, err, "[]")
 }

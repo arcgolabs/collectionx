@@ -1,6 +1,7 @@
 package set_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	set "github.com/arcgolabs/collectionx/set"
@@ -71,13 +72,13 @@ func TestOrderedSet_CachesReturnDefensiveCopies(t *testing.T) {
 	values[0] = 99
 	require.Equal(t, []int{1, 2, 3}, s.Values())
 
-	data, err := s.ToJSON()
+	data, err := json.Marshal(s)
 	require.NoError(t, err)
 	require.Equal(t, `[1,2,3]`, string(data))
 	require.Equal(t, `[1,2,3]`, s.String())
 
 	data[0] = '{'
-	fresh, err := s.ToJSON()
+	fresh, err := json.Marshal(s)
 	require.NoError(t, err)
 	require.Equal(t, `[1,2,3]`, string(fresh))
 

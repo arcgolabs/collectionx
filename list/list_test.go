@@ -1,6 +1,7 @@
 package list_test
 
 import (
+	"encoding/json"
 	"strconv"
 	"testing"
 
@@ -152,13 +153,13 @@ func TestList_JSONCacheReturnsDefensiveCopy(t *testing.T) {
 
 	l := list.NewList(1, 2, 3)
 
-	data, err := l.ToJSON()
+	data, err := json.Marshal(l)
 	require.NoError(t, err)
 	require.Equal(t, `[1,2,3]`, string(data))
 	require.Equal(t, `[1,2,3]`, l.String())
 
 	data[0] = '{'
-	fresh, err := l.ToJSON()
+	fresh, err := json.Marshal(l)
 	require.NoError(t, err)
 	require.Equal(t, `[1,2,3]`, string(fresh))
 

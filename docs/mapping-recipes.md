@@ -1,13 +1,13 @@
 ---
 title: 'collectionx Maps, Sets, and Tables'
 linkTitle: 'maps-sets'
-description: 'Recipes for Set, Ordered types, MultiMap, Table, and serialization helpers'
+description: 'Recipes for Set, Ordered types, MultiMap, Table, and direct serialization'
 weight: 3
 ---
 
 ## Maps, sets, and tables
 
-Patterns for **`collectionx/set`** and **`collectionx/mapping`**: deduplication, stable iteration order, one-to-many keys, 2D tables, and serialization helpers.
+Patterns for **`collectionx/set`** and **`collectionx/mapping`**: deduplication, stable iteration order, one-to-many keys, 2D tables, and direct serialization.
 
 Each section is a standalone `package main` you can paste into its own file.
 
@@ -147,7 +147,7 @@ func main() {
 }
 ```
 
-`ToJSON()` and `String()` are still available when you explicitly want JSON bytes or log-friendly output.
+Collection instances are meant to be passed directly to `json.Marshal`, `json.Unmarshal`, `gob`, or binary codecs.
 
 ## 6) Caveats
 

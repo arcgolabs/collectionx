@@ -50,3 +50,26 @@ func TestDisjointSet_UnionAutoAddsAndClear(t *testing.T) {
 	require.True(t, ds.IsEmpty())
 	require.Equal(t, map[string][]string{}, ds.Groups())
 }
+
+func TestDisjointSet_MembersAndRangeGroups(t *testing.T) {
+	t.Parallel()
+
+	ds := disjointset.New[int]()
+	ds.Union(1, 2)
+	ds.Union(2, 3)
+	ds.Union(10, 11)
+
+	members := ds.MembersOf(2)
+	require.ElementsMatch(t, []int{1, 2, 3}, members)
+	require.Nil(t, ds.MembersOf(99))
+
+	groupCount := 0
+	totalMembers := 0
+	ds.RangeGroups(func(_ int, members []int) bool {
+		groupCount++
+		totalMembers += len(members)
+		return true
+	})
+	require.Equal(t, ds.SetCount(), groupCount)
+	require.Equal(t, ds.Len(), totalMembers)
+}

@@ -213,6 +213,141 @@ func (g *Graph[K, V]) NodeIDs() []K {
 	return slices.Clone(g.order)
 }
 
+// Clone returns a shallow copy preserving node and edge insertion order.
+func (g *Graph[K, V]) Clone() *Graph[K, V] {
+	if g == nil {
+		return NewUndirectedGraph[K, V]()
+	}
+	out := &Graph[K, V]{directed: g.directed}
+	for _, id := range g.order {
+		node := g.nodes[id]
+		out.AddNode(id, node.value)
+	}
+	for _, from := range g.order {
+		node := g.nodes[from]
+		for _, to := range node.order {
+			if g.directed || from == to || !out.HasEdge(from, to) {
+				_ = out.AddEdge(from, to)
+			}
+		}
+	}
+	return out
+}
+
+// Degree returns total incident edge count for id.
+// For directed graphs this is InDegree(id) + OutDegree(id).
+func (g *Graph[K, V]) Degree(id K) int {
+	if g == nil || g.nodes == nil {
+		return 0
+	}
+	if !g.directed {
+		node, ok := g.nodes[id]
+		if !ok {
+			return 0
+		}
+		return len(node.order)
+	}
+	return g.InDegree(id) + g.OutDegree(id)
+}
+
+// OutDegree returns the number of outgoing edges for id.
+func (g *Graph[K, V]) OutDegree(id K) int {
+	if g == nil || g.nodes == nil {
+		return 0
+	}
+	node, ok := g.nodes[id]
+	if !ok {
+		return 0
+	}
+	return len(node.order)
+}
+
+// InDegree returns the number of incoming edges for id.
+func (g *Graph[K, V]) InDegree(id K) int {
+	if g == nil || g.nodes == nil {
+		return 0
+	}
+	if _, ok := g.nodes[id]; !ok {
+		return 0
+	}
+	inDegree := 0
+	for _, nodeID := range g.order {
+		node := g.nodes[nodeID]
+		for _, neighborID := range node.order {
+			if neighborID == id {
+				inDegree++
+			}
+		}
+	}
+	return inDegree
+}
+
+// RangeNodes iterates nodes in insertion order until fn returns false.
+func (g *Graph[K, V]) RangeNodes(fn func(id K, value V) bool) {
+	if g == nil || g.nodes == nil || fn == nil {
+		return
+	}
+	for _, id := range g.order {
+		node := g.nodes[id]
+		if !fn(id, node.value) {
+			return
+		}
+	}
+}
+
+// RangeEdges iterates edges in insertion order until fn returns false.
+func (g *Graph[K, V]) RangeEdges(fn func(from, to K) bool) {
+	if g == nil || g.nodes == nil || fn == nil {
+		return
+	}
+	if g.directed {
+		for _, from := range g.order {
+			node := g.nodes[from]
+			for _, to := range node.order {
+				if !fn(from, to) {
+					return
+				}
+			}
+		}
+		return
+	}
+
+	emitted := make(map[graphEdgeSnapshot[K]]struct{}, g.edgeCount*2)
+	for _, from := range g.order {
+		node := g.nodes[from]
+		for _, to := range node.order {
+			edge := graphEdgeSnapshot[K]{From: from, To: to}
+			if _, seen := emitted[edge]; seen {
+				continue
+			}
+			if !fn(from, to) {
+				return
+			}
+			emitted[edge] = struct{}{}
+			emitted[graphEdgeSnapshot[K]{From: to, To: from}] = struct{}{}
+		}
+	}
+}
+
+// PathExists reports whether to is reachable from from.
+func (g *Graph[K, V]) PathExists(from, to K) bool {
+	if g == nil || g.nodes == nil {
+		return false
+	}
+	if from == to {
+		return g.HasNode(from)
+	}
+	found := false
+	g.BFS(from, func(id K, _ V) bool {
+		if id == to {
+			found = true
+			return false
+		}
+		return true
+	})
+	return found
+}
+
 // BFS iterates reachable nodes in breadth-first order until visit returns false.
 func (g *Graph[K, V]) BFS(start K, visit func(id K, value V) bool) {
 	if g == nil || g.nodes == nil || visit == nil {

@@ -7,8 +7,7 @@ import (
 	common "github.com/arcgolabs/collectionx/internal"
 )
 
-// ToJSON serializes set values to JSON.
-func (s *Set[T]) ToJSON() ([]byte, error) {
+func (s *Set[T]) marshalJSONBytes() ([]byte, error) {
 	if s != nil && !s.jsonDirty && s.jsonCache != nil {
 		return slices.Clone(s.jsonCache), nil
 	}
@@ -24,7 +23,11 @@ func (s *Set[T]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (s *Set[T]) MarshalJSON() ([]byte, error) {
-	return forwardSetJSON("set", s.ToJSON)
+	data, err := s.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal set JSON: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
@@ -32,12 +35,11 @@ func (s *Set[T]) String() string {
 	if s != nil && !s.jsonDirty && s.stringCache != "" {
 		return s.stringCache
 	}
-	data, err := s.ToJSON()
+	data, err := s.marshalJSONBytes()
 	return common.JSONResultString(data, err, "[]")
 }
 
-// ToJSON serializes concurrent set values to JSON.
-func (s *ConcurrentSet[T]) ToJSON() ([]byte, error) {
+func (s *ConcurrentSet[T]) marshalJSONBytes() ([]byte, error) {
 	if s == nil {
 		return marshalSetJSON("concurrent set", []T(nil))
 	}
@@ -72,7 +74,11 @@ func (s *ConcurrentSet[T]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (s *ConcurrentSet[T]) MarshalJSON() ([]byte, error) {
-	return forwardSetJSON("concurrent set", s.ToJSON)
+	data, err := s.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal concurrent set JSON: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
@@ -87,27 +93,30 @@ func (s *ConcurrentSet[T]) String() string {
 		return value
 	}
 	s.mu.RUnlock()
-	data, err := s.ToJSON()
+	data, err := s.marshalJSONBytes()
 	return common.JSONResultString(data, err, "[]")
 }
 
-// ToJSON serializes multiset counts to JSON.
-func (s *MultiSet[T]) ToJSON() ([]byte, error) {
+func (s *MultiSet[T]) marshalJSONBytes() ([]byte, error) {
 	return marshalSetJSON("multiset", s.AllCounts())
 }
 
 // MarshalJSON implements json.Marshaler.
 func (s *MultiSet[T]) MarshalJSON() ([]byte, error) {
-	return forwardSetJSON("multiset", s.ToJSON)
+	data, err := s.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal multiset JSON: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
 func (s *MultiSet[T]) String() string {
-	return common.StringFromToJSON(s.ToJSON, "{}")
+	data, err := s.marshalJSONBytes()
+	return common.JSONResultString(data, err, "{}")
 }
 
-// ToJSON serializes ordered set values to JSON.
-func (s *OrderedSet[T]) ToJSON() ([]byte, error) {
+func (s *OrderedSet[T]) marshalJSONBytes() ([]byte, error) {
 	if s != nil && !s.jsonDirty && s.jsonCache != nil {
 		return slices.Clone(s.jsonCache), nil
 	}
@@ -123,7 +132,11 @@ func (s *OrderedSet[T]) ToJSON() ([]byte, error) {
 
 // MarshalJSON implements json.Marshaler.
 func (s *OrderedSet[T]) MarshalJSON() ([]byte, error) {
-	return forwardSetJSON("ordered set", s.ToJSON)
+	data, err := s.marshalJSONBytes()
+	if err != nil {
+		return nil, fmt.Errorf("marshal ordered set JSON: %w", err)
+	}
+	return data, nil
 }
 
 // String implements fmt.Stringer.
@@ -131,21 +144,12 @@ func (s *OrderedSet[T]) String() string {
 	if s != nil && !s.jsonDirty && s.stringCache != "" {
 		return s.stringCache
 	}
-	data, err := s.ToJSON()
+	data, err := s.marshalJSONBytes()
 	return common.JSONResultString(data, err, "[]")
 }
 
 func marshalSetJSON[T any](kind string, value T) ([]byte, error) {
 	data, err := common.MarshalJSONValue(value)
-	if err != nil {
-		return nil, fmt.Errorf("marshal %s JSON: %w", kind, err)
-	}
-
-	return data, nil
-}
-
-func forwardSetJSON(kind string, fn func() ([]byte, error)) ([]byte, error) {
-	data, err := common.ForwardToJSON(fn)
 	if err != nil {
 		return nil, fmt.Errorf("marshal %s JSON: %w", kind, err)
 	}
