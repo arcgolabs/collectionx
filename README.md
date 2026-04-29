@@ -52,9 +52,27 @@ For single-goroutine use or external locking, prefer the non-concurrent types fo
 - `GetOption` helpers use `mo.Option` for nullable-style reads where applicable.
 - Prefer constructors even when zero values work, for clarity.
 
-## JSON and logging
+## Serialization
 
-Most structures support `ToJSON`, `MarshalJSON` (for `json.Marshal`), and `String()`. See [Maps, sets, and tables](./mapping-recipes) for a minimal JSON example.
+Most structures can be passed directly to standard library serializers:
+
+- `json.Marshal` / `json.Unmarshal`
+- `gob.NewEncoder(...).Encode(...)` / `Decode(...)`
+- `MarshalBinary` / `UnmarshalBinary`
+
+You do not need to call a separate snapshot helper first. `ToJSON()` is still available when you explicitly want raw JSON bytes for logs, debugging, or custom transport code.
+
+Typical usage:
+
+```go
+payload, err := json.Marshal(myCollection)
+err = json.Unmarshal(payload, &myCollection)
+```
+
+Notes:
+
+- `PriorityQueue` does not support automatic restore because its comparator is runtime configuration, not serialized data.
+- `ShardedConcurrentMap` can be serialized directly, but to restore it you should initialize the receiver with `NewShardedConcurrentMap(...)` first so the hash function is available.
 
 ## Benchmarks
 

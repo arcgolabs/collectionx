@@ -1,13 +1,13 @@
 ---
 title: 'collectionx Maps, Sets, and Tables'
 linkTitle: 'maps-sets'
-description: 'Recipes for Set, Ordered types, MultiMap, Table, and JSON helpers'
+description: 'Recipes for Set, Ordered types, MultiMap, Table, and serialization helpers'
 weight: 3
 ---
 
 ## Maps, sets, and tables
 
-Patterns for **`collectionx/set`** and **`collectionx/mapping`**: deduplication, stable iteration order, one-to-many keys, 2D tables, and JSON/`String()` helpers.
+Patterns for **`collectionx/set`** and **`collectionx/mapping`**: deduplication, stable iteration order, one-to-many keys, 2D tables, and serialization helpers.
 
 Each section is a standalone `package main` you can paste into its own file.
 
@@ -103,14 +103,16 @@ func main() {
 }
 ```
 
-## 5) JSON and logging helpers
+## 5) Serialize directly
 
-Most structures expose `ToJSON`, `MarshalJSON`, and `String()` for logs.
+Most structures can be passed directly to `encoding/json`, `encoding/gob`, or binary codecs without calling a separate snapshot helper.
 
 ```go
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 
@@ -118,21 +120,39 @@ import (
 )
 
 func main() {
-	s := set.NewSet[string]("a", "b")
-	raw, err := s.ToJSON()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(raw))
-	fmt.Println(s.String())
+	s := set.NewOrderedSet[string]("a", "b")
 
 	payload, err := json.Marshal(s)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(string(payload))
+
+	var restored set.OrderedSet[string]
+	if err := json.Unmarshal(payload, &restored); err != nil {
+		panic(err)
+	}
+	fmt.Println(restored.Values())
+
+	var buf bytes.Buffer
+	if err := gob.NewEncoder(&buf).Encode(s); err != nil {
+		panic(err)
+	}
+
+	var restoredGob set.OrderedSet[string]
+	if err := gob.NewDecoder(&buf).Decode(&restoredGob); err != nil {
+		panic(err)
+	}
+	fmt.Println(restoredGob.Values())
 }
 ```
+
+`ToJSON()` and `String()` are still available when you explicitly want JSON bytes or log-friendly output.
+
+## 6) Caveats
+
+- `PriorityQueue` cannot be automatically restored from serialized data because its comparator is runtime configuration.
+- `ShardedConcurrentMap` can be serialized directly, but restore should target an already-initialized receiver created with `NewShardedConcurrentMap(...)`.
 
 ## Related
 

@@ -123,3 +123,9 @@ func main() {
 
 - [Getting Started](./getting-started)
 - [Maps, sets, and tables](./mapping-recipes)
+
+## Serialization notes
+
+The structures on this page can be passed directly to `json.Marshal`, `json.Unmarshal`, `gob` encoders/decoders, and binary codecs without calling a separate snapshot helper.
+
+The main exception is `PriorityQueue`: values can be serialized, but automatic restore is not supported because the comparator is runtime configuration rather than serialized data.

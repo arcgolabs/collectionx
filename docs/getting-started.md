@@ -12,7 +12,8 @@ weight: 2
 ## 1) Install
 
 ```bash
-go get github.com/arcgolabs/collectionx@latest
+go get github.com/arcgolabs/collectionx/set@latest
+go get github.com/arcgolabs/collectionx/mapping@latest
 ```
 
 ## 2) Create `main.go`
@@ -44,8 +45,41 @@ func main() {
 
 ```bash
 go mod init example.com/collectionx-hello
-go get github.com/arcgolabs/collectionx@latest
+go get github.com/arcgolabs/collectionx/set@latest
+go get github.com/arcgolabs/collectionx/mapping@latest
 go run .
+```
+
+## 4) Serialize directly
+
+Collection instances can be passed directly to standard library serializers. You do not need to call a separate snapshot helper first.
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/arcgolabs/collectionx/set"
+)
+
+func main() {
+	s := set.NewOrderedSet[string]("a", "b")
+
+	data, err := json.Marshal(s)
+	if err != nil {
+		panic(err)
+	}
+
+	var restored set.OrderedSet[string]
+	if err := json.Unmarshal(data, &restored); err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(data))
+	fmt.Println(restored.Values())
+}
 ```
 
 ## Next
