@@ -3,6 +3,7 @@
 package mapping
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"slices"
@@ -145,15 +146,7 @@ func (m *OrderedMap[K, V]) ToJSON() ([]byte, error) {
 	if m != nil && !m.jsonDirty && m.jsonCache != nil {
 		return slices.Clone(m.jsonCache), nil
 	}
-	var (
-		data []byte
-		err  error
-	)
-	if m == nil || len(m.items.items) == 0 {
-		data, err = marshalMappingJSON(map[K]V{}, "ordered map")
-	} else {
-		data, err = marshalMappingJSON(m.items.items, "ordered map")
-	}
+	data, err := marshalOrderedMapJSON(m)
 	if err != nil {
 		return nil, err
 	}
@@ -367,4 +360,39 @@ func forwardMappingJSON(toJSON func() ([]byte, error), kind string) ([]byte, err
 		return nil, fmt.Errorf("marshal %s: %w", kind, err)
 	}
 	return data, nil
+}
+
+func marshalOrderedMapJSON[K comparable, V any](m *OrderedMap[K, V]) ([]byte, error) {
+	if m == nil || m.order.Len() == 0 {
+		return marshalMappingJSON(map[string]V{}, "ordered map")
+	}
+
+	var buffer bytes.Buffer
+	buffer.WriteByte('{')
+
+	for index := range m.order.Len() {
+		key, value, _ := m.At(index)
+		fieldName, err := encodeObjectKey(key)
+		if err != nil {
+			return nil, fmt.Errorf("marshal ordered map json: %w", err)
+		}
+		valueData, err := json.Marshal(value)
+		if err != nil {
+			return nil, fmt.Errorf("marshal ordered map json: %w", err)
+		}
+
+		if index > 0 {
+			buffer.WriteByte(',')
+		}
+		keyData, err := json.Marshal(fieldName)
+		if err != nil {
+			return nil, fmt.Errorf("marshal ordered map json: %w", err)
+		}
+		buffer.Write(keyData)
+		buffer.WriteByte(':')
+		buffer.Write(valueData)
+	}
+
+	buffer.WriteByte('}')
+	return buffer.Bytes(), nil
 }
