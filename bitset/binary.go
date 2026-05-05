@@ -2,13 +2,11 @@ package bitset
 
 import (
 	"fmt"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (b *BitSet) MarshalBinary() ([]byte, error) {
-	data, err := common.MarshalBinaryValue(b.Values())
+	data, err := marshalBinaryValue(b.Values())
 	if err != nil {
 		return nil, fmt.Errorf("marshal bitset binary: %w", err)
 	}
@@ -27,7 +25,7 @@ func (b *BitSet) UnmarshalBinary(data []byte) error {
 	}
 
 	var bits []int
-	if err := common.UnmarshalBinaryValue(data, &bits); err != nil {
+	if err := unmarshalBinaryValue(data, &bits); err != nil {
 		return fmt.Errorf("unmarshal bitset binary: %w", err)
 	}
 

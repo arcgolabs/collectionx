@@ -3,8 +3,6 @@ package set
 import (
 	"fmt"
 	"slices"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 func (s *Set[T]) marshalJSONBytes() ([]byte, error) {
@@ -36,7 +34,7 @@ func (s *Set[T]) String() string {
 		return s.stringCache
 	}
 	data, err := s.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (s *ConcurrentSet[T]) marshalJSONBytes() ([]byte, error) {
@@ -94,7 +92,7 @@ func (s *ConcurrentSet[T]) String() string {
 	}
 	s.mu.RUnlock()
 	data, err := s.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (s *MultiSet[T]) marshalJSONBytes() ([]byte, error) {
@@ -113,7 +111,7 @@ func (s *MultiSet[T]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (s *MultiSet[T]) String() string {
 	data, err := s.marshalJSONBytes()
-	return common.JSONResultString(data, err, "{}")
+	return jsonResultString(data, err, "{}")
 }
 
 func (s *OrderedSet[T]) marshalJSONBytes() ([]byte, error) {
@@ -145,11 +143,11 @@ func (s *OrderedSet[T]) String() string {
 		return s.stringCache
 	}
 	data, err := s.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func marshalSetJSON[T any](kind string, value T) ([]byte, error) {
-	data, err := common.MarshalJSONValue(value)
+	data, err := marshalJSONValue(value)
 	if err != nil {
 		return nil, fmt.Errorf("marshal %s JSON: %w", kind, err)
 	}

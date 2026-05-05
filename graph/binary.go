@@ -2,13 +2,11 @@ package graph
 
 import (
 	"fmt"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (g *Graph[K, V]) MarshalBinary() ([]byte, error) {
-	data, err := common.MarshalBinaryValue(g.snapshot())
+	data, err := marshalBinaryValue(g.snapshot())
 	if err != nil {
 		return nil, fmt.Errorf("marshal graph binary: %w", err)
 	}
@@ -27,7 +25,7 @@ func (g *Graph[K, V]) UnmarshalBinary(data []byte) error {
 	}
 
 	var snap graphSnapshot[K, V]
-	if err := common.UnmarshalBinaryValue(data, &snap); err != nil {
+	if err := unmarshalBinaryValue(data, &snap); err != nil {
 		return fmt.Errorf("unmarshal graph binary: %w", err)
 	}
 

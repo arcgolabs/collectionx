@@ -6,7 +6,6 @@ use (
 	disjointset
 	examples
 	graph
-	internal
 	interval
 	list
 	mapping

@@ -2,13 +2,11 @@ package disjointset
 
 import (
 	"fmt"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (d *DisjointSet[T]) MarshalBinary() ([]byte, error) {
-	data, err := common.MarshalBinaryValue(d.groupsSnapshot())
+	data, err := marshalBinaryValue(d.groupsSnapshot())
 	if err != nil {
 		return nil, fmt.Errorf("marshal disjoint set binary: %w", err)
 	}
@@ -27,7 +25,7 @@ func (d *DisjointSet[T]) UnmarshalBinary(data []byte) error {
 	}
 
 	var groups [][]T
-	if err := common.UnmarshalBinaryValue(data, &groups); err != nil {
+	if err := unmarshalBinaryValue(data, &groups); err != nil {
 		return fmt.Errorf("unmarshal disjoint set binary: %w", err)
 	}
 

@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 func (l *List[T]) marshalJSONBytes() ([]byte, error) {
@@ -46,7 +44,7 @@ func (l *List[T]) String() string {
 		return l.stringCache
 	}
 	data, err := l.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (g *Grid[T]) marshalJSONBytes() ([]byte, error) {
@@ -65,7 +63,7 @@ func (g *Grid[T]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (g *Grid[T]) String() string {
 	data, err := g.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (g *ConcurrentGrid[T]) marshalJSONBytes() ([]byte, error) {
@@ -84,7 +82,7 @@ func (g *ConcurrentGrid[T]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (g *ConcurrentGrid[T]) String() string {
 	data, err := g.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (l *ConcurrentList[T]) marshalJSONBytes() ([]byte, error) {
@@ -146,7 +144,7 @@ func (l *ConcurrentList[T]) String() string {
 	}
 	l.mu.RUnlock()
 	data, err := l.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (d *Deque[T]) marshalJSONBytes() ([]byte, error) {
@@ -165,7 +163,7 @@ func (d *Deque[T]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (d *Deque[T]) String() string {
 	data, err := d.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (d *ConcurrentDeque[T]) marshalJSONBytes() ([]byte, error) {
@@ -184,7 +182,7 @@ func (d *ConcurrentDeque[T]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (d *ConcurrentDeque[T]) String() string {
 	data, err := d.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (r *RingBuffer[T]) marshalJSONBytes() ([]byte, error) {
@@ -203,7 +201,7 @@ func (r *RingBuffer[T]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (r *RingBuffer[T]) String() string {
 	data, err := r.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (r *ConcurrentRingBuffer[T]) marshalJSONBytes() ([]byte, error) {
@@ -222,7 +220,7 @@ func (r *ConcurrentRingBuffer[T]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (r *ConcurrentRingBuffer[T]) String() string {
 	data, err := r.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (r *RopeList[T]) marshalJSONBytes() ([]byte, error) {
@@ -241,7 +239,7 @@ func (r *RopeList[T]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (r *RopeList[T]) String() string {
 	data, err := r.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (pq *PriorityQueue[T]) marshalJSONBytes() ([]byte, error) {
@@ -260,7 +258,7 @@ func (pq *PriorityQueue[T]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (pq *PriorityQueue[T]) String() string {
 	data, err := pq.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func marshalListJSON(value any, kind string) ([]byte, error) {

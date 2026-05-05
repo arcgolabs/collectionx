@@ -3,15 +3,13 @@ package interval
 import (
 	"fmt"
 	"slices"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 func (s *RangeSet[T]) marshalJSONBytes() ([]byte, error) {
 	if s != nil && !s.jsonDirty && s.jsonCache != nil {
 		return slices.Clone(s.jsonCache), nil
 	}
-	data, err := common.MarshalJSONValue(s.Ranges())
+	data, err := marshalJSONValue(s.Ranges())
 	if err != nil {
 		return nil, fmt.Errorf("marshal range set json: %w", err)
 	}
@@ -38,14 +36,14 @@ func (s *RangeSet[T]) String() string {
 		return s.stringCache
 	}
 	data, err := s.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (m *RangeMap[T, V]) marshalJSONBytes() ([]byte, error) {
 	if m != nil && !m.jsonDirty && m.jsonCache != nil {
 		return slices.Clone(m.jsonCache), nil
 	}
-	data, err := common.MarshalJSONValue(m.Entries())
+	data, err := marshalJSONValue(m.Entries())
 	if err != nil {
 		return nil, fmt.Errorf("marshal range map json: %w", err)
 	}
@@ -72,5 +70,5 @@ func (m *RangeMap[T, V]) String() string {
 		return m.stringCache
 	}
 	data, err := m.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }

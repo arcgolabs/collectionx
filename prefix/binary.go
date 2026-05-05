@@ -2,13 +2,11 @@ package prefix
 
 import (
 	"fmt"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (t *Trie[V]) MarshalBinary() ([]byte, error) {
-	data, err := common.MarshalBinaryValue(t.All())
+	data, err := marshalBinaryValue(t.All())
 	if err != nil {
 		return nil, fmt.Errorf("marshal trie binary: %w", err)
 	}
@@ -26,7 +24,7 @@ func (t *Trie[V]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal trie binary: nil receiver")
 	}
 	var items map[string]V
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal trie binary: %w", err)
 	}
 	next := NewTrie[V]()

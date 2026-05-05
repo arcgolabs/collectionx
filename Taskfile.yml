@@ -81,7 +81,6 @@ tasks:
       - git tag disjointset/v{{.VERSION}}
       - git tag examples/v{{.VERSION}}
       - git tag graph/v{{.VERSION}}
-      - git tag internal/v{{.VERSION}}
       - git tag interval/v{{.VERSION}}
       - git tag list/v{{.VERSION}}
       - git tag mapping/v{{.VERSION}}
@@ -98,7 +97,6 @@ tasks:
       - git push origin disjointset/v{{.VERSION}}
       - git push origin examples/v{{.VERSION}}
       - git push origin graph/v{{.VERSION}}
-      - git push origin internal/v{{.VERSION}}
       - git push origin interval/v{{.VERSION}}
       - git push origin list/v{{.VERSION}}
       - git push origin mapping/v{{.VERSION}}

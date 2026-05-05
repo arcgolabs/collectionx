@@ -2,8 +2,6 @@ package tree
 
 import (
 	"fmt"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 type jsonNode[K comparable, V any] struct {
@@ -28,7 +26,7 @@ func (t *Tree[K, V]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (t *Tree[K, V]) String() string {
 	data, err := t.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (t *ConcurrentTree[K, V]) marshalJSONBytes() ([]byte, error) {
@@ -47,7 +45,7 @@ func (t *ConcurrentTree[K, V]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (t *ConcurrentTree[K, V]) String() string {
 	data, err := t.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (t *Tree[K, V]) toJSONNodes() []jsonNode[K, V] {
@@ -87,7 +85,7 @@ func toJSONNode[K comparable, V any](node *Node[K, V]) jsonNode[K, V] {
 }
 
 func marshalTreeJSON[T any](kind string, value T) ([]byte, error) {
-	data, err := common.MarshalJSONValue(value)
+	data, err := marshalJSONValue(value)
 	if err != nil {
 		return nil, fmt.Errorf("marshal %s JSON: %w", kind, err)
 	}

@@ -2,8 +2,6 @@ package list
 
 import (
 	"fmt"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 // MarshalBinary implements encoding.BinaryMarshaler.
@@ -22,7 +20,7 @@ func (l *List[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal list binary: nil receiver")
 	}
 	var items []T
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal list binary: %w", err)
 	}
 	*l = *NewListWithCapacity[T](len(items), items...)
@@ -50,7 +48,7 @@ func (g *Grid[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal grid binary: nil receiver")
 	}
 	var rows [][]T
-	if err := common.UnmarshalBinaryValue(data, &rows); err != nil {
+	if err := unmarshalBinaryValue(data, &rows); err != nil {
 		return fmt.Errorf("unmarshal grid binary: %w", err)
 	}
 	*g = *NewGridWithCapacity[T](len(rows), rows...)
@@ -78,7 +76,7 @@ func (g *ConcurrentGrid[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal concurrent grid binary: nil receiver")
 	}
 	var rows [][]T
-	if err := common.UnmarshalBinaryValue(data, &rows); err != nil {
+	if err := unmarshalBinaryValue(data, &rows); err != nil {
 		return fmt.Errorf("unmarshal concurrent grid binary: %w", err)
 	}
 	g.mu.Lock()
@@ -108,7 +106,7 @@ func (l *ConcurrentList[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal concurrent list binary: nil receiver")
 	}
 	var items []T
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal concurrent list binary: %w", err)
 	}
 	l.mu.Lock()
@@ -141,7 +139,7 @@ func (d *Deque[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal deque binary: nil receiver")
 	}
 	var items []T
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal deque binary: %w", err)
 	}
 	*d = *NewDeque(items...)
@@ -169,7 +167,7 @@ func (d *ConcurrentDeque[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal concurrent deque binary: nil receiver")
 	}
 	var items []T
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal concurrent deque binary: %w", err)
 	}
 	d.mu.Lock()
@@ -199,7 +197,7 @@ func (r *RingBuffer[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal ring buffer binary: nil receiver")
 	}
 	var items []T
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal ring buffer binary: %w", err)
 	}
 	next := NewRingBuffer[T](len(items))
@@ -231,7 +229,7 @@ func (r *ConcurrentRingBuffer[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal concurrent ring buffer binary: nil receiver")
 	}
 	var items []T
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal concurrent ring buffer binary: %w", err)
 	}
 	r.mu.Lock()
@@ -264,7 +262,7 @@ func (r *RopeList[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal rope list binary: nil receiver")
 	}
 	var items []T
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal rope list binary: %w", err)
 	}
 	*r = *NewRopeList(items...)
@@ -277,7 +275,7 @@ func (r *RopeList[T]) GobDecode(data []byte) error {
 }
 
 func marshalListBinary(kind string, value any) ([]byte, error) {
-	data, err := common.MarshalBinaryValue(value)
+	data, err := marshalBinaryValue(value)
 	if err != nil {
 		return nil, fmt.Errorf("marshal %s binary: %w", kind, err)
 	}

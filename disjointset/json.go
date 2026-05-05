@@ -2,12 +2,10 @@ package disjointset
 
 import (
 	"fmt"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 func (d *DisjointSet[T]) marshalJSONBytes() ([]byte, error) {
-	data, err := common.MarshalJSONValue(d.groupsSnapshot())
+	data, err := marshalJSONValue(d.groupsSnapshot())
 	if err != nil {
 		return nil, fmt.Errorf("marshal disjoint set JSON: %w", err)
 	}
@@ -26,7 +24,7 @@ func (d *DisjointSet[T]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (d *DisjointSet[T]) String() string {
 	data, err := d.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }
 
 func (d *DisjointSet[T]) groupsSnapshot() [][]T {

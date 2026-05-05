@@ -2,12 +2,10 @@ package bitset
 
 import (
 	"fmt"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 func (b *BitSet) marshalJSONBytes() ([]byte, error) {
-	data, err := common.MarshalJSONValue(b.Values())
+	data, err := marshalJSONValue(b.Values())
 	if err != nil {
 		return nil, fmt.Errorf("marshal bitset JSON: %w", err)
 	}
@@ -26,5 +24,5 @@ func (b *BitSet) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (b *BitSet) String() string {
 	data, err := b.marshalJSONBytes()
-	return common.JSONResultString(data, err, "[]")
+	return jsonResultString(data, err, "[]")
 }

@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 func (m *Map[K, V]) marshalJSONBytes() ([]byte, error) {
@@ -49,7 +47,7 @@ func (m *Map[K, V]) String() string {
 		return m.stringCache
 	}
 	data, err := m.marshalJSONBytes()
-	return common.JSONResultString(data, err, "{}")
+	return jsonResultString(data, err, "{}")
 }
 
 func (m *ConcurrentMap[K, V]) marshalJSONBytes() ([]byte, error) {
@@ -111,7 +109,7 @@ func (m *ConcurrentMap[K, V]) String() string {
 	}
 	m.mu.RUnlock()
 	data, err := m.marshalJSONBytes()
-	return common.JSONResultString(data, err, "{}")
+	return jsonResultString(data, err, "{}")
 }
 
 func (m *ShardedConcurrentMap[K, V]) marshalJSONBytes() ([]byte, error) {
@@ -130,7 +128,7 @@ func (m *ShardedConcurrentMap[K, V]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (m *ShardedConcurrentMap[K, V]) String() string {
 	data, err := m.marshalJSONBytes()
-	return common.JSONResultString(data, err, "{}")
+	return jsonResultString(data, err, "{}")
 }
 
 func (m *BiMap[K, V]) marshalJSONBytes() ([]byte, error) {
@@ -152,7 +150,7 @@ func (m *BiMap[K, V]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (m *BiMap[K, V]) String() string {
 	data, err := m.marshalJSONBytes()
-	return common.JSONResultString(data, err, "{}")
+	return jsonResultString(data, err, "{}")
 }
 
 func (m *OrderedMap[K, V]) marshalJSONBytes() ([]byte, error) {
@@ -184,7 +182,7 @@ func (m *OrderedMap[K, V]) String() string {
 		return m.stringCache
 	}
 	data, err := m.marshalJSONBytes()
-	return common.JSONResultString(data, err, "{}")
+	return jsonResultString(data, err, "{}")
 }
 
 func (m *MultiMap[K, V]) marshalJSONBytes() ([]byte, error) {
@@ -216,7 +214,7 @@ func (m *MultiMap[K, V]) String() string {
 		return m.stringCache
 	}
 	data, err := m.marshalJSONBytes()
-	return common.JSONResultString(data, err, "{}")
+	return jsonResultString(data, err, "{}")
 }
 
 func (m *ConcurrentMultiMap[K, V]) marshalJSONBytes() ([]byte, error) {
@@ -278,7 +276,7 @@ func (m *ConcurrentMultiMap[K, V]) String() string {
 	}
 	m.mu.RUnlock()
 	data, err := m.marshalJSONBytes()
-	return common.JSONResultString(data, err, "{}")
+	return jsonResultString(data, err, "{}")
 }
 
 func (t *Table[R, C, V]) marshalJSONBytes() ([]byte, error) {
@@ -310,7 +308,7 @@ func (t *Table[R, C, V]) String() string {
 		return t.stringCache
 	}
 	data, err := t.marshalJSONBytes()
-	return common.JSONResultString(data, err, "{}")
+	return jsonResultString(data, err, "{}")
 }
 
 func (t *ConcurrentTable[R, C, V]) marshalJSONBytes() ([]byte, error) {
@@ -372,7 +370,7 @@ func (t *ConcurrentTable[R, C, V]) String() string {
 	}
 	t.mu.RUnlock()
 	data, err := t.marshalJSONBytes()
-	return common.JSONResultString(data, err, "{}")
+	return jsonResultString(data, err, "{}")
 }
 
 func marshalMappingJSON(value any, kind string) ([]byte, error) {

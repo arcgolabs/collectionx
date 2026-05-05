@@ -3,7 +3,6 @@ package set
 import (
 	"fmt"
 
-	common "github.com/arcgolabs/collectionx/internal"
 	collectionmapping "github.com/arcgolabs/collectionx/mapping"
 )
 
@@ -23,7 +22,7 @@ func (s *Set[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal set binary: nil receiver")
 	}
 	var items []T
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal set binary: %w", err)
 	}
 	*s = *NewSetWithCapacity[T](len(items), items...)
@@ -51,7 +50,7 @@ func (s *ConcurrentSet[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal concurrent set binary: nil receiver")
 	}
 	var items []T
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal concurrent set binary: %w", err)
 	}
 	s.mu.Lock()
@@ -84,7 +83,7 @@ func (s *MultiSet[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal multiset binary: nil receiver")
 	}
 	var counts map[T]int
-	if err := common.UnmarshalBinaryValue(data, &counts); err != nil {
+	if err := unmarshalBinaryValue(data, &counts); err != nil {
 		return fmt.Errorf("unmarshal multiset binary: %w", err)
 	}
 	next := &MultiSet[T]{}
@@ -126,7 +125,7 @@ func (s *OrderedSet[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal ordered set binary: nil receiver")
 	}
 	var items []T
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal ordered set binary: %w", err)
 	}
 	*s = *NewOrderedSetWithCapacity[T](len(items), items...)
@@ -139,7 +138,7 @@ func (s *OrderedSet[T]) GobDecode(data []byte) error {
 }
 
 func marshalSetBinary(kind string, value any) ([]byte, error) {
-	data, err := common.MarshalBinaryValue(value)
+	data, err := marshalBinaryValue(value)
 	if err != nil {
 		return nil, fmt.Errorf("marshal %s binary: %w", kind, err)
 	}

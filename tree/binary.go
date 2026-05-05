@@ -2,13 +2,11 @@ package tree
 
 import (
 	"fmt"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (t *Tree[K, V]) MarshalBinary() ([]byte, error) {
-	data, err := common.MarshalBinaryValue(t.toJSONNodes())
+	data, err := marshalBinaryValue(t.toJSONNodes())
 	if err != nil {
 		return nil, fmt.Errorf("marshal tree binary: %w", err)
 	}
@@ -26,7 +24,7 @@ func (t *Tree[K, V]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal tree binary: nil receiver")
 	}
 	var roots []jsonNode[K, V]
-	if err := common.UnmarshalBinaryValue(data, &roots); err != nil {
+	if err := unmarshalBinaryValue(data, &roots); err != nil {
 		return fmt.Errorf("unmarshal tree binary: %w", err)
 	}
 	next := NewTree[K, V]()

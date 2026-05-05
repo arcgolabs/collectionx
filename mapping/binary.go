@@ -2,8 +2,6 @@ package mapping
 
 import (
 	"fmt"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 type orderedMapEntry[K comparable, V any] struct {
@@ -27,7 +25,7 @@ func (m *Map[K, V]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal map binary: nil receiver")
 	}
 	var items map[K]V
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal map binary: %w", err)
 	}
 	*m = *NewMapWithCapacity[K, V](len(items))
@@ -56,7 +54,7 @@ func (m *ConcurrentMap[K, V]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal concurrent map binary: nil receiver")
 	}
 	var items map[K]V
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal concurrent map binary: %w", err)
 	}
 	m.mu.Lock()
@@ -94,7 +92,7 @@ func (m *ShardedConcurrentMap[K, V]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal sharded concurrent map binary: receiver must be initialized with NewShardedConcurrentMap")
 	}
 	var items map[K]V
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal sharded concurrent map binary: %w", err)
 	}
 	m.Clear()
@@ -123,7 +121,7 @@ func (m *BiMap[K, V]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal bimap binary: nil receiver")
 	}
 	var items map[K]V
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal bimap binary: %w", err)
 	}
 	next := NewBiMap[K, V]()
@@ -160,7 +158,7 @@ func (m *OrderedMap[K, V]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal ordered map binary: nil receiver")
 	}
 	var entries []orderedMapEntry[K, V]
-	if err := common.UnmarshalBinaryValue(data, &entries); err != nil {
+	if err := unmarshalBinaryValue(data, &entries); err != nil {
 		return fmt.Errorf("unmarshal ordered map binary: %w", err)
 	}
 	next := NewOrderedMapWithCapacity[K, V](len(entries))
@@ -192,7 +190,7 @@ func (m *MultiMap[K, V]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal multimap binary: nil receiver")
 	}
 	var items map[K][]V
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal multimap binary: %w", err)
 	}
 	next := NewMultiMapWithCapacity[K, V](len(items))
@@ -224,7 +222,7 @@ func (m *ConcurrentMultiMap[K, V]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal concurrent multimap binary: nil receiver")
 	}
 	var items map[K][]V
-	if err := common.UnmarshalBinaryValue(data, &items); err != nil {
+	if err := unmarshalBinaryValue(data, &items); err != nil {
 		return fmt.Errorf("unmarshal concurrent multimap binary: %w", err)
 	}
 	m.mu.Lock()
@@ -260,7 +258,7 @@ func (t *Table[R, C, V]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal table binary: nil receiver")
 	}
 	var rows map[R]map[C]V
-	if err := common.UnmarshalBinaryValue(data, &rows); err != nil {
+	if err := unmarshalBinaryValue(data, &rows); err != nil {
 		return fmt.Errorf("unmarshal table binary: %w", err)
 	}
 	next := NewTable[R, C, V]()
@@ -292,7 +290,7 @@ func (t *ConcurrentTable[R, C, V]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal concurrent table binary: nil receiver")
 	}
 	var rows map[R]map[C]V
-	if err := common.UnmarshalBinaryValue(data, &rows); err != nil {
+	if err := unmarshalBinaryValue(data, &rows); err != nil {
 		return fmt.Errorf("unmarshal concurrent table binary: %w", err)
 	}
 	t.mu.Lock()
@@ -328,7 +326,7 @@ func (m *OrderedMap[K, V]) entriesSnapshot() []orderedMapEntry[K, V] {
 }
 
 func marshalMappingBinary(kind string, value any) ([]byte, error) {
-	data, err := common.MarshalBinaryValue(value)
+	data, err := marshalBinaryValue(value)
 	if err != nil {
 		return nil, fmt.Errorf("marshal %s binary: %w", kind, err)
 	}

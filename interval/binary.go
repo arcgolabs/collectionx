@@ -2,13 +2,11 @@ package interval
 
 import (
 	"fmt"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (s *RangeSet[T]) MarshalBinary() ([]byte, error) {
-	data, err := common.MarshalBinaryValue(s.Ranges())
+	data, err := marshalBinaryValue(s.Ranges())
 	if err != nil {
 		return nil, fmt.Errorf("marshal range set binary: %w", err)
 	}
@@ -26,7 +24,7 @@ func (s *RangeSet[T]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal range set binary: nil receiver")
 	}
 	var ranges []Range[T]
-	if err := common.UnmarshalBinaryValue(data, &ranges); err != nil {
+	if err := unmarshalBinaryValue(data, &ranges); err != nil {
 		return fmt.Errorf("unmarshal range set binary: %w", err)
 	}
 	next := NewRangeSet[T]()
@@ -47,7 +45,7 @@ func (s *RangeSet[T]) GobDecode(data []byte) error {
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (m *RangeMap[T, V]) MarshalBinary() ([]byte, error) {
-	data, err := common.MarshalBinaryValue(m.Entries())
+	data, err := marshalBinaryValue(m.Entries())
 	if err != nil {
 		return nil, fmt.Errorf("marshal range map binary: %w", err)
 	}
@@ -65,7 +63,7 @@ func (m *RangeMap[T, V]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal range map binary: nil receiver")
 	}
 	var entries []RangeEntry[T, V]
-	if err := common.UnmarshalBinaryValue(data, &entries); err != nil {
+	if err := unmarshalBinaryValue(data, &entries); err != nil {
 		return fmt.Errorf("unmarshal range map binary: %w", err)
 	}
 	next := NewRangeMap[T, V]()

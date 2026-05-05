@@ -2,8 +2,6 @@ package graph
 
 import (
 	"fmt"
-
-	common "github.com/arcgolabs/collectionx/internal"
 )
 
 type graphNodeSnapshot[K comparable, V any] struct {
@@ -23,7 +21,7 @@ type graphSnapshot[K comparable, V any] struct {
 }
 
 func (g *Graph[K, V]) marshalJSONBytes() ([]byte, error) {
-	data, err := common.MarshalJSONValue(g.snapshot())
+	data, err := marshalJSONValue(g.snapshot())
 	if err != nil {
 		return nil, fmt.Errorf("marshal graph JSON: %w", err)
 	}
@@ -42,7 +40,7 @@ func (g *Graph[K, V]) MarshalJSON() ([]byte, error) {
 // String implements fmt.Stringer.
 func (g *Graph[K, V]) String() string {
 	data, err := g.marshalJSONBytes()
-	return common.JSONResultString(data, err, "{}")
+	return jsonResultString(data, err, "{}")
 }
 
 func (g *Graph[K, V]) snapshot() graphSnapshot[K, V] {
