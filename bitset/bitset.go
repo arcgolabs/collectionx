@@ -63,9 +63,15 @@ func (b *BitSet) AddRange(start, end int) {
 	if b == nil || start < 0 || start >= end {
 		return
 	}
-	b.ensureWord((end - 1) / 64)
-	for bit := start; bit < end; bit++ {
-		b.Set(bit)
+	startWord := start / 64
+	endWord := (end - 1) / 64
+	b.ensureWord(endWord)
+	for wordIndex := startWord; wordIndex <= endWord; wordIndex++ {
+		mask := rangeWordMask(start, end, wordIndex)
+		before := b.words[wordIndex]
+		after := before | mask
+		b.words[wordIndex] = after
+		b.count += bits.OnesCount64(after) - bits.OnesCount64(before)
 	}
 }
 
@@ -93,12 +99,25 @@ func (b *BitSet) RemoveRange(start, end int) int {
 	if b == nil || start < 0 || start >= end || len(b.words) == 0 {
 		return 0
 	}
-	removed := 0
-	for bit := start; bit < end; bit++ {
-		if b.Remove(bit) {
-			removed++
-		}
+	maxBit := len(b.words) * 64
+	if start >= maxBit {
+		return 0
 	}
+	if end > maxBit {
+		end = maxBit
+	}
+	startWord := start / 64
+	endWord := (end - 1) / 64
+	removed := 0
+	for wordIndex := startWord; wordIndex <= endWord; wordIndex++ {
+		mask := rangeWordMask(start, end, wordIndex)
+		before := b.words[wordIndex]
+		after := before &^ mask
+		b.words[wordIndex] = after
+		removed += bits.OnesCount64(before) - bits.OnesCount64(after)
+	}
+	b.count -= removed
+	b.trimTrailingZeros()
 	return removed
 }
 
@@ -303,4 +322,23 @@ func wordAt(b *BitSet, index int) uint64 {
 		return 0
 	}
 	return b.words[index]
+}
+
+func rangeWordMask(start, end, wordIndex int) uint64 {
+	wordStart := wordIndex * 64
+	wordEnd := wordStart + 64
+	if start > wordStart {
+		wordStart = start
+	}
+	if end < wordEnd {
+		wordEnd = end
+	}
+	startOffset := wordStart - wordIndex*64
+	endOffset := wordEnd - wordIndex*64
+	lower := ^uint64(0) << startOffset
+	if endOffset == 64 {
+		return lower
+	}
+	upper := uint64(1)<<endOffset - 1
+	return lower & upper
 }

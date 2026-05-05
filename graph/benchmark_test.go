@@ -1,6 +1,7 @@
 package graph_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/arcgolabs/collectionx/graph"
@@ -79,6 +80,71 @@ func BenchmarkGraphDeleteNodeReadd(b *testing.B) {
 		}
 		if err := g.AddEdge(parent, nodeID); err != nil {
 			b.Fatalf("AddEdge(%d, %d) error = %v", parent, nodeID, err)
+		}
+	}
+}
+
+func BenchmarkGraphRangeNodes(b *testing.B) {
+	g := buildBenchDirectedGraph(b)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		g.RangeNodes(func(_ int, _ int) bool { return true })
+	}
+}
+
+func BenchmarkGraphRangeEdges(b *testing.B) {
+	g := buildBenchDirectedGraph(b)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		g.RangeEdges(func(_, _ int) bool { return true })
+	}
+}
+
+func BenchmarkGraphPathExists(b *testing.B) {
+	g := buildBenchDirectedGraph(b)
+	target := benchGraphNodes - 1
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		if !g.PathExists(0, target) {
+			b.Fatal("PathExists() returned false")
+		}
+	}
+}
+
+func BenchmarkGraphMarshalJSON(b *testing.B) {
+	g := buildBenchDirectedGraph(b)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		data, err := json.Marshal(g)
+		if err != nil {
+			b.Fatalf("json.Marshal() error = %v", err)
+		}
+		if len(data) == 0 {
+			b.Fatal("json.Marshal() returned empty data")
+		}
+	}
+}
+
+func BenchmarkGraphMarshalBinary(b *testing.B) {
+	g := buildBenchDirectedGraph(b)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		data, err := g.MarshalBinary()
+		if err != nil {
+			b.Fatalf("MarshalBinary() error = %v", err)
+		}
+		if len(data) == 0 {
+			b.Fatal("MarshalBinary() returned empty data")
 		}
 	}
 }

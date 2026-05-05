@@ -161,7 +161,11 @@ func (d *DisjointSet[T]) Groups() map[T][]T {
 	groups := make(map[T][]T, d.setCount)
 	for item := range d.parent {
 		root, _ := d.Find(item)
-		groups[root] = append(groups[root], item)
+		members := groups[root]
+		if members == nil {
+			members = make([]T, 0, d.size[root])
+		}
+		groups[root] = append(members, item)
 	}
 	return groups
 }

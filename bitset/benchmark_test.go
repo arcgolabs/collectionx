@@ -1,6 +1,7 @@
 package bitset_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/arcgolabs/collectionx/bitset"
@@ -69,6 +70,77 @@ func BenchmarkBitSetSymmetricDifference(b *testing.B) {
 		out := left.SymmetricDifference(right)
 		if out.Len() != benchBitSetBits {
 			b.Fatalf("unexpected symmetric difference length: %d", out.Len())
+		}
+	}
+}
+
+func BenchmarkBitSetAddRange(b *testing.B) {
+	b.ReportAllocs()
+	for range b.N {
+		s := &bitset.BitSet{}
+		s.AddRange(128, benchBitSetBits)
+		if s.Len() != benchBitSetBits-128 {
+			b.Fatalf("unexpected length: %d", s.Len())
+		}
+	}
+}
+
+func BenchmarkBitSetRemoveRange(b *testing.B) {
+	s := &bitset.BitSet{}
+	s.AddRange(0, benchBitSetBits)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		removed := s.RemoveRange(128, benchBitSetBits-128)
+		if removed != benchBitSetBits-256 {
+			b.Fatalf("unexpected removed count: %d", removed)
+		}
+		s.AddRange(128, benchBitSetBits-128)
+	}
+}
+
+func BenchmarkBitSetNextSet(b *testing.B) {
+	s := buildBenchBitSet()
+	span := benchBitSetBits - 1
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := range b.N {
+		if _, ok := s.NextSet(i % span); !ok {
+			b.Fatal("NextSet returned false")
+		}
+	}
+}
+
+func BenchmarkBitSetMarshalJSON(b *testing.B) {
+	s := buildBenchBitSet()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		data, err := json.Marshal(s)
+		if err != nil {
+			b.Fatalf("json.Marshal() error = %v", err)
+		}
+		if len(data) == 0 {
+			b.Fatal("json.Marshal() returned empty data")
+		}
+	}
+}
+
+func BenchmarkBitSetMarshalBinary(b *testing.B) {
+	s := buildBenchBitSet()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		data, err := s.MarshalBinary()
+		if err != nil {
+			b.Fatalf("MarshalBinary() error = %v", err)
+		}
+		if len(data) == 0 {
+			b.Fatal("MarshalBinary() returned empty data")
 		}
 	}
 }
