@@ -74,6 +74,34 @@ func BenchmarkBitSetSymmetricDifference(b *testing.B) {
 	}
 }
 
+func BenchmarkBitSetIntersects(b *testing.B) {
+	left := buildBenchBitSet()
+	right := &bitset.BitSet{}
+	right.AddRange(benchBitSetBits-64, benchBitSetBits)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		if !left.Intersects(right) {
+			b.Fatal("Intersects() returned false")
+		}
+	}
+}
+
+func BenchmarkBitSetIsSubsetOf(b *testing.B) {
+	left := buildBenchBitSet()
+	right := &bitset.BitSet{}
+	right.AddRange(0, benchBitSetBits)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		if !left.IsSubsetOf(right) {
+			b.Fatal("IsSubsetOf() returned false")
+		}
+	}
+}
+
 func BenchmarkBitSetAddRange(b *testing.B) {
 	b.ReportAllocs()
 	for range b.N {

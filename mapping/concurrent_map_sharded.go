@@ -2,6 +2,7 @@ package mapping
 
 import (
 	"hash/maphash"
+	"math/bits"
 	"sync"
 
 	"github.com/samber/lo"
@@ -33,11 +34,7 @@ func NewShardedConcurrentMap[K comparable, V any](shardCount int, hash func(K) u
 		shardCount = defaultShardCount
 	}
 	// round up to power of 2
-	n := 1
-	for n < shardCount {
-		n *= 2
-	}
-	shardCount = n
+	shardCount = 1 << bits.Len(uint(shardCount-1))
 
 	shards := make([]struct {
 		mu   sync.RWMutex
@@ -85,11 +82,7 @@ func (m *ShardedConcurrentMap[K, V]) shard(key K) *struct {
 }
 
 func shardMask(shardCount int) uint64 {
-	var mask uint64
-	for range shardCount - 1 {
-		mask++
-	}
-	return mask
+	return uint64(shardCount - 1)
 }
 
 func hashSignedInt64(value int64) uint64 {

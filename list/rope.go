@@ -204,15 +204,11 @@ func (r *RopeList[T]) Values() []T {
 
 // Range iterates items.
 func (r *RopeList[T]) Range(fn func(index int, item T) bool) {
-	if r == nil || fn == nil {
+	if r == nil || r.root == nil || fn == nil {
 		return
 	}
-	for i := range r.len {
-		v, _ := r.Get(i)
-		if !fn(i, v) {
-			return
-		}
-	}
+	index := 0
+	r.root.rangeItems(&index, fn)
 }
 
 // Clone returns a shallow copy.

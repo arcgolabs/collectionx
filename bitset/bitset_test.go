@@ -36,6 +36,11 @@ func TestBitSet_SetOperations(t *testing.T) {
 	require.Equal(t, []int{2}, left.Intersect(right).Values())
 	require.Equal(t, []int{1, 64}, left.Difference(right).Values())
 	require.Equal(t, []int{1, 3, 64, 65}, left.SymmetricDifference(right).Values())
+	require.True(t, left.Intersects(right))
+	require.False(t, left.Intersects(bitset.New(7, 8)))
+	require.True(t, bitset.New(1, 64).IsSubsetOf(left))
+	require.False(t, bitset.New(1, 65).IsSubsetOf(left))
+	require.True(t, left.IsSupersetOf(bitset.New(1, 64)))
 }
 
 func TestBitSet_RangeAndClear(t *testing.T) {

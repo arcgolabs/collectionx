@@ -109,6 +109,22 @@ func BenchmarkRopeListGet(b *testing.B) {
 	}
 }
 
+func BenchmarkRopeListRange(b *testing.B) {
+	r := list.NewRopeList[int]()
+	for i := range benchListKeySpace {
+		r.Add(i)
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		r.Range(func(_ int, item int) bool {
+			_ = item
+			return true
+		})
+	}
+}
+
 func BenchmarkListAddAtLarge(b *testing.B) {
 	const largeSize = 50_000
 	l := list.NewListWithCapacity[int](largeSize)

@@ -6,6 +6,7 @@ type Deque[T any] struct {
 	buf  []T
 	head int
 	size int
+	mask int
 }
 
 // NewDeque creates an empty deque with optional initial items.
@@ -45,7 +46,7 @@ func (d *Deque[T]) PopFront() (T, bool) {
 	}
 	value := d.buf[d.head]
 	d.buf[d.head] = zero
-	d.head = (d.head + 1) % len(d.buf)
+	d.head = d.wrap(d.head + 1)
 	d.size--
 	if d.size == 0 {
 		d.head = 0
@@ -148,7 +149,7 @@ func (d *Deque[T]) pushFrontOne(item T) {
 		d.size = 1
 		return
 	}
-	d.head = (d.head - 1 + len(d.buf)) % len(d.buf)
+	d.head = d.wrap(d.head - 1)
 	d.buf[d.head] = item
 	d.size++
 }
@@ -167,6 +168,7 @@ func (d *Deque[T]) ensureCapacity(extra int) {
 			capacity *= 2
 		}
 		d.buf = make([]T, capacity)
+		d.mask = capacity - 1
 		return
 	}
 
@@ -187,8 +189,13 @@ func (d *Deque[T]) ensureCapacity(extra int) {
 	}
 	d.buf = newBuf
 	d.head = 0
+	d.mask = newCap - 1
 }
 
 func (d *Deque[T]) physicalIndex(logicalIndex int) int {
-	return (d.head + logicalIndex) % len(d.buf)
+	return d.wrap(d.head + logicalIndex)
+}
+
+func (d *Deque[T]) wrap(index int) int {
+	return index & d.mask
 }

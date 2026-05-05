@@ -119,7 +119,7 @@ func (r *ConcurrentRingBuffer[T]) Range(fn func(index int, item T) bool) {
 		return
 	}
 	for index := range r.buffer.size {
-		item := r.buffer.buf[(r.buffer.head+index)%len(r.buffer.buf)]
+		item := r.buffer.buf[r.buffer.wrap(r.buffer.head+index)]
 		if !fn(index, item) {
 			return
 		}
@@ -141,7 +141,7 @@ func (r *ConcurrentRingBuffer[T]) Snapshot() *RingBuffer[T] {
 
 	out = NewRingBuffer[T](r.buffer.Capacity())
 	for index := range r.buffer.size {
-		item := r.buffer.buf[(r.buffer.head+index)%len(r.buffer.buf)]
+		item := r.buffer.buf[r.buffer.wrap(r.buffer.head+index)]
 		_ = out.Push(item)
 	}
 	return out

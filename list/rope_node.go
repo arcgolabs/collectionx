@@ -182,6 +182,25 @@ func (n *ropeNode[T]) appendTo(dst []T) []T {
 	return n.right.appendTo(dst)
 }
 
+func (n *ropeNode[T]) rangeItems(index *int, fn func(index int, item T) bool) bool {
+	if n == nil {
+		return true
+	}
+	if n.isLeaf() {
+		for _, item := range n.leaf {
+			if !fn(*index, item) {
+				return false
+			}
+			(*index)++
+		}
+		return true
+	}
+	if !n.left.rangeItems(index, fn) {
+		return false
+	}
+	return n.right.rangeItems(index, fn)
+}
+
 func (n *ropeNode[T]) clone() *ropeNode[T] {
 	if n == nil {
 		return nil

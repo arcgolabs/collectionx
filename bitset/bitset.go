@@ -54,7 +54,15 @@ func (b *BitSet) Add(bits ...int) {
 		b.ensureWord(maxWordIndex)
 	}
 	for _, bit := range bits {
-		b.Set(bit)
+		if bit < 0 {
+			continue
+		}
+		wordIndex := bit / 64
+		mask := uint64(1) << (bit % 64)
+		if b.words[wordIndex]&mask == 0 {
+			b.words[wordIndex] |= mask
+			b.count++
+		}
 	}
 }
 
@@ -66,13 +74,19 @@ func (b *BitSet) AddRange(start, end int) {
 	startWord := start / 64
 	endWord := (end - 1) / 64
 	b.ensureWord(endWord)
-	for wordIndex := startWord; wordIndex <= endWord; wordIndex++ {
-		mask := rangeWordMask(start, end, wordIndex)
-		before := b.words[wordIndex]
-		after := before | mask
-		b.words[wordIndex] = after
-		b.count += bits.OnesCount64(after) - bits.OnesCount64(before)
+
+	startOffset := start % 64
+	endOffset := (end-1)%64 + 1
+	if startWord == endWord {
+		b.addWordMask(startWord, wordMaskBetweenOffsets(startOffset, endOffset))
+		return
 	}
+
+	b.addWordMask(startWord, ^uint64(0)<<startOffset)
+	for wordIndex := startWord + 1; wordIndex < endWord; wordIndex++ {
+		b.addWordMask(wordIndex, ^uint64(0))
+	}
+	b.addWordMask(endWord, wordMaskBetweenOffsets(0, endOffset))
 }
 
 // Remove clears one bit and reports whether it existed.
@@ -108,13 +122,18 @@ func (b *BitSet) RemoveRange(start, end int) int {
 	}
 	startWord := start / 64
 	endWord := (end - 1) / 64
-	removed := 0
-	for wordIndex := startWord; wordIndex <= endWord; wordIndex++ {
-		mask := rangeWordMask(start, end, wordIndex)
-		before := b.words[wordIndex]
-		after := before &^ mask
-		b.words[wordIndex] = after
-		removed += bits.OnesCount64(before) - bits.OnesCount64(after)
+	startOffset := start % 64
+	endOffset := (end-1)%64 + 1
+
+	var removed int
+	if startWord == endWord {
+		removed = b.removeWordMask(startWord, wordMaskBetweenOffsets(startOffset, endOffset))
+	} else {
+		removed += b.removeWordMask(startWord, ^uint64(0)<<startOffset)
+		for wordIndex := startWord + 1; wordIndex < endWord; wordIndex++ {
+			removed += b.removeWordMask(wordIndex, ^uint64(0))
+		}
+		removed += b.removeWordMask(endWord, wordMaskBetweenOffsets(0, endOffset))
 	}
 	b.count -= removed
 	b.trimTrailingZeros()
@@ -288,11 +307,54 @@ func (b *BitSet) SymmetricDifference(other *BitSet) *BitSet {
 	return out
 }
 
+// Intersects reports whether the two bitsets share at least one bit.
+func (b *BitSet) Intersects(other *BitSet) bool {
+	minWords := min(lenWords(b), lenWords(other))
+	for i := range minWords {
+		if b.words[i]&other.words[i] != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// IsSubsetOf reports whether every bit in b exists in other.
+func (b *BitSet) IsSubsetOf(other *BitSet) bool {
+	if b == nil || b.count == 0 {
+		return true
+	}
+	for i, word := range b.words {
+		if word&^wordAt(other, i) != 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// IsSupersetOf reports whether every bit in other exists in b.
+func (b *BitSet) IsSupersetOf(other *BitSet) bool {
+	return other.IsSubsetOf(b)
+}
+
 func (b *BitSet) ensureWord(index int) {
 	if index < len(b.words) {
 		return
 	}
 	b.words = append(b.words, make([]uint64, index-len(b.words)+1)...)
+}
+
+func (b *BitSet) addWordMask(wordIndex int, mask uint64) {
+	before := b.words[wordIndex]
+	after := before | mask
+	b.words[wordIndex] = after
+	b.count += bits.OnesCount64(after) - bits.OnesCount64(before)
+}
+
+func (b *BitSet) removeWordMask(wordIndex int, mask uint64) int {
+	before := b.words[wordIndex]
+	after := before &^ mask
+	b.words[wordIndex] = after
+	return bits.OnesCount64(before) - bits.OnesCount64(after)
 }
 
 func (b *BitSet) trimTrailingZeros() {
@@ -324,17 +386,7 @@ func wordAt(b *BitSet, index int) uint64 {
 	return b.words[index]
 }
 
-func rangeWordMask(start, end, wordIndex int) uint64 {
-	wordStart := wordIndex * 64
-	wordEnd := wordStart + 64
-	if start > wordStart {
-		wordStart = start
-	}
-	if end < wordEnd {
-		wordEnd = end
-	}
-	startOffset := wordStart - wordIndex*64
-	endOffset := wordEnd - wordIndex*64
+func wordMaskBetweenOffsets(startOffset, endOffset int) uint64 {
 	lower := ^uint64(0) << startOffset
 	if endOffset == 64 {
 		return lower

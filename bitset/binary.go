@@ -2,11 +2,20 @@ package bitset
 
 import (
 	"fmt"
+	"slices"
 )
+
+type bitSetBinarySnapshot struct {
+	Words []uint64
+}
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (b *BitSet) MarshalBinary() ([]byte, error) {
-	data, err := marshalBinaryValue(b.Values())
+	var snapshot bitSetBinarySnapshot
+	if b != nil {
+		snapshot.Words = slices.Clone(b.words)
+	}
+	data, err := marshalBinaryValue(snapshot)
 	if err != nil {
 		return nil, fmt.Errorf("marshal bitset binary: %w", err)
 	}
@@ -22,6 +31,13 @@ func (b *BitSet) GobEncode() ([]byte, error) {
 func (b *BitSet) UnmarshalBinary(data []byte) error {
 	if b == nil {
 		return fmt.Errorf("unmarshal bitset binary: nil receiver")
+	}
+
+	var snapshot bitSetBinarySnapshot
+	if err := unmarshalBinaryValue(data, &snapshot); err == nil {
+		b.words = slices.Clone(snapshot.Words)
+		b.recount()
+		return nil
 	}
 
 	var bits []int

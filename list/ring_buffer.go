@@ -10,6 +10,7 @@ type RingBuffer[T any] struct {
 	buf  []T
 	head int
 	size int
+	mask int
 }
 
 // NewRingBuffer creates a ring buffer with fixed capacity.
@@ -19,7 +20,8 @@ func NewRingBuffer[T any](capacity int) *RingBuffer[T] {
 		capacity = 0
 	}
 	return &RingBuffer[T]{
-		buf: make([]T, capacity),
+		buf:  make([]T, capacity),
+		mask: ringBufferMask(capacity),
 	}
 }
 
@@ -60,7 +62,7 @@ func (r *RingBuffer[T]) Push(value T) mo.Option[T] {
 	}
 
 	if r.size < len(r.buf) {
-		tail := (r.head + r.size) % len(r.buf)
+		tail := r.wrap(r.head + r.size)
 		r.buf[tail] = value
 		r.size++
 		return mo.None[T]()
@@ -68,7 +70,7 @@ func (r *RingBuffer[T]) Push(value T) mo.Option[T] {
 
 	evicted := r.buf[r.head]
 	r.buf[r.head] = value
-	r.head = (r.head + 1) % len(r.buf)
+	r.head = r.wrap(r.head + 1)
 	return mo.Some(evicted)
 }
 
@@ -80,7 +82,7 @@ func (r *RingBuffer[T]) Pop() (T, bool) {
 	}
 	value := r.buf[r.head]
 	r.buf[r.head] = zero
-	r.head = (r.head + 1) % len(r.buf)
+	r.head = r.wrap(r.head + 1)
 	r.size--
 	if r.size == 0 {
 		r.head = 0
@@ -104,7 +106,7 @@ func (r *RingBuffer[T]) Values() []T {
 	}
 	out := make([]T, r.size)
 	for i := range r.size {
-		out[i] = r.buf[(r.head+i)%len(r.buf)]
+		out[i] = r.buf[r.wrap(r.head+i)]
 	}
 	return out
 }
@@ -116,8 +118,22 @@ func (r *RingBuffer[T]) Clear() {
 	}
 	var zero T
 	for i := range r.size {
-		r.buf[(r.head+i)%len(r.buf)] = zero
+		r.buf[r.wrap(r.head+i)] = zero
 	}
 	r.head = 0
 	r.size = 0
+}
+
+func (r *RingBuffer[T]) wrap(index int) int {
+	if r.mask >= 0 {
+		return index & r.mask
+	}
+	return index % len(r.buf)
+}
+
+func ringBufferMask(capacity int) int {
+	if capacity > 0 && capacity&(capacity-1) == 0 {
+		return capacity - 1
+	}
+	return -1
 }
