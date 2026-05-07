@@ -174,6 +174,38 @@ func TestTree_RangeBFS(t *testing.T) {
 	require.Equal(t, []int{1, 2, 3, 4}, visited)
 }
 
+func TestTree_SnapshotAPIs(t *testing.T) {
+	tr := tree.NewTree[int, string]()
+	require.NoError(t, tr.AddRoot(1, "root"))
+	require.NoError(t, tr.AddRoot(9, "root-b"))
+	require.NoError(t, tr.AddChild(1, 2, "child-a"))
+	require.NoError(t, tr.AddChild(2, 3, "child-b"))
+
+	require.Equal(t, []tree.NodeSnapshot[int, string]{
+		{
+			ID:    1,
+			Value: "root",
+			Children: []tree.NodeSnapshot[int, string]{
+				{
+					ID:    2,
+					Value: "child-a",
+					Children: []tree.NodeSnapshot[int, string]{
+						{ID: 3, Value: "child-b"},
+					},
+				},
+			},
+		},
+		{ID: 9, Value: "root-b"},
+	}, tr.Nodes())
+
+	require.Equal(t, []tree.Entry[int, string]{
+		tree.RootEntry(1, "root"),
+		tree.ChildEntry(2, 1, "child-a"),
+		tree.ChildEntry(3, 2, "child-b"),
+		tree.RootEntry(9, "root-b"),
+	}, tr.Entries())
+}
+
 func nodeIDs(nodes []*tree.Node[int, string]) []int {
 	if len(nodes) == 0 {
 		return nil

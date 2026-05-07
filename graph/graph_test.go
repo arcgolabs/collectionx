@@ -115,3 +115,35 @@ func TestGraph_RangeAndPathExists(t *testing.T) {
 	require.False(t, g.PathExists(4, 1))
 	require.False(t, g.PathExists(1, 9))
 }
+
+func TestGraph_SnapshotAPIs(t *testing.T) {
+	t.Parallel()
+
+	g := graph.NewDirectedGraph[int, string]()
+	g.AddNode(1, "a")
+	g.AddNode(2, "b")
+	g.AddNode(3, "c")
+	require.NoError(t, g.AddEdge(1, 2))
+	require.NoError(t, g.AddEdge(2, 3))
+
+	require.Equal(t, []graph.NodeSnapshot[int, string]{
+		{ID: 1, Value: "a"},
+		{ID: 2, Value: "b"},
+		{ID: 3, Value: "c"},
+	}, g.Nodes())
+	require.Equal(t, []graph.EdgeSnapshot[int]{
+		{From: 1, To: 2},
+		{From: 2, To: 3},
+	}, g.Edges())
+
+	snapshot := g.Snapshot()
+	require.True(t, snapshot.Directed)
+	require.Equal(t, g.Nodes(), snapshot.Nodes)
+	require.Equal(t, g.Edges(), snapshot.Edges)
+
+	undirected := graph.NewUndirectedGraph[int, string]()
+	undirected.AddNode(1, "a")
+	undirected.AddNode(2, "b")
+	require.NoError(t, undirected.AddEdge(1, 2))
+	require.Equal(t, []graph.EdgeSnapshot[int]{{From: 1, To: 2}}, undirected.Edges())
+}

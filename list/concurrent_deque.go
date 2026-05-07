@@ -1,6 +1,10 @@
 package list
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/samber/mo"
+)
 
 // ConcurrentDeque is a goroutine-safe deque wrapper.
 // Zero value is ready to use.
@@ -71,6 +75,20 @@ func (d *ConcurrentDeque[T]) Front() (T, bool) {
 	return d.deque.Front()
 }
 
+// GetFirst returns the front item without removing it.
+func (d *ConcurrentDeque[T]) GetFirst() (T, bool) {
+	return d.Front()
+}
+
+// GetFirstOption returns the front item as mo.Option.
+func (d *ConcurrentDeque[T]) GetFirstOption() mo.Option[T] {
+	value, ok := d.GetFirst()
+	if !ok {
+		return mo.None[T]()
+	}
+	return mo.Some(value)
+}
+
 // Back returns back item without removing it.
 func (d *ConcurrentDeque[T]) Back() (T, bool) {
 	var zero T
@@ -80,6 +98,20 @@ func (d *ConcurrentDeque[T]) Back() (T, bool) {
 		return zero, false
 	}
 	return d.deque.Back()
+}
+
+// GetLast returns the back item without removing it.
+func (d *ConcurrentDeque[T]) GetLast() (T, bool) {
+	return d.Back()
+}
+
+// GetLastOption returns the back item as mo.Option.
+func (d *ConcurrentDeque[T]) GetLastOption() mo.Option[T] {
+	value, ok := d.GetLast()
+	if !ok {
+		return mo.None[T]()
+	}
+	return mo.Some(value)
 }
 
 // Get returns item at logical index from front.

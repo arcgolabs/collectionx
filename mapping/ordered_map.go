@@ -93,6 +93,11 @@ func (m *OrderedMap[K, V]) First() (K, V, bool) {
 	return m.At(0)
 }
 
+// GetFirst returns the first key-value pair in insertion order.
+func (m *OrderedMap[K, V]) GetFirst() (K, V, bool) {
+	return m.First()
+}
+
 // Last returns the last key-value pair in insertion order.
 func (m *OrderedMap[K, V]) Last() (K, V, bool) {
 	if m == nil || m.order.Len() == 0 {

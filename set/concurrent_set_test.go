@@ -49,6 +49,16 @@ func TestConcurrentSet_SnapshotIsIndependent(t *testing.T) {
 	require.False(t, snap.Contains(9))
 }
 
+func TestConcurrentSet_GetFirst(t *testing.T) {
+	t.Parallel()
+
+	s := set.NewConcurrentSet("a", "b")
+	value, ok := s.GetFirst()
+	require.True(t, ok)
+	require.Contains(t, []string{"a", "b"}, value)
+	require.True(t, s.GetFirstOption().IsPresent())
+}
+
 func TestConcurrentSet_Merge(t *testing.T) {
 	t.Parallel()
 

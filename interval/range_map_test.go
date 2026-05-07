@@ -25,6 +25,18 @@ func TestRangeMap_PutOverride(t *testing.T) {
 		},
 		entries,
 	)
+	first, ok := m.GetFirst()
+	require.True(t, ok)
+	require.Equal(t, interval.RangeEntry[int, string]{
+		Range: interval.Range[int]{Start: 0, End: 3},
+		Value: "A",
+	}, first)
+	last, ok := m.GetLast()
+	require.True(t, ok)
+	require.Equal(t, interval.RangeEntry[int, string]{
+		Range: interval.Range[int]{Start: 6, End: 10},
+		Value: "A",
+	}, last)
 
 	value, ok := m.Get(4)
 	require.True(t, ok)

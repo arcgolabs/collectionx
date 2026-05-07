@@ -3,7 +3,6 @@ module github.com/arcgolabs/collectionx/mapping
 go 1.26.2
 
 require (
-	github.com/samber/lo v1.53.0
 	github.com/samber/mo v1.16.0
 	github.com/stretchr/testify v1.11.1
 )

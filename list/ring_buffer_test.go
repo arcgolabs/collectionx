@@ -21,6 +21,14 @@ func TestRingBuffer_Overwrite(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, 1, value)
 	require.Equal(t, []int{2, 3, 4}, r.Values())
+	first, ok := r.GetFirst()
+	require.True(t, ok)
+	require.Equal(t, 2, first)
+	last, ok := r.GetLast()
+	require.True(t, ok)
+	require.Equal(t, 4, last)
+	require.True(t, r.GetFirstOption().IsPresent())
+	require.True(t, r.GetLastOption().IsPresent())
 }
 
 func TestRingBuffer_PopOrder(t *testing.T) {

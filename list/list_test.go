@@ -230,3 +230,14 @@ func TestList_BinarySearchFunc(t *testing.T) {
 	require.False(t, ok)
 	require.Equal(t, -1, index)
 }
+
+func TestList_ViewValues(t *testing.T) {
+	t.Parallel()
+
+	l := list.NewList(1, 2, 3)
+	var viewed []int
+	l.ViewValues(func(items []int) {
+		viewed = append(viewed, items...)
+	})
+	require.Equal(t, []int{1, 2, 3}, viewed)
+}

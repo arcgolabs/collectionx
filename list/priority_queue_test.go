@@ -31,6 +31,9 @@ func TestPriorityQueue_MaxHeap(t *testing.T) {
 	v, ok := pq.Peek()
 	require.True(t, ok)
 	require.Equal(t, 10, v)
+	v, ok = pq.GetFirst()
+	require.True(t, ok)
+	require.Equal(t, 10, v)
 }
 
 func TestPriorityQueue_ErrorOnNilComparator(t *testing.T) {

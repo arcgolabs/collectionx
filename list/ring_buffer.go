@@ -99,6 +99,38 @@ func (r *RingBuffer[T]) Peek() (T, bool) {
 	return r.buf[r.head], true
 }
 
+// GetFirst returns the oldest value without removing it.
+func (r *RingBuffer[T]) GetFirst() (T, bool) {
+	return r.Peek()
+}
+
+// GetFirstOption returns the oldest value as mo.Option.
+func (r *RingBuffer[T]) GetFirstOption() mo.Option[T] {
+	value, ok := r.GetFirst()
+	if !ok {
+		return mo.None[T]()
+	}
+	return mo.Some(value)
+}
+
+// GetLast returns the newest value without removing it.
+func (r *RingBuffer[T]) GetLast() (T, bool) {
+	var zero T
+	if r == nil || r.size == 0 {
+		return zero, false
+	}
+	return r.buf[r.wrap(r.head+r.size-1)], true
+}
+
+// GetLastOption returns the newest value as mo.Option.
+func (r *RingBuffer[T]) GetLastOption() mo.Option[T] {
+	value, ok := r.GetLast()
+	if !ok {
+		return mo.None[T]()
+	}
+	return mo.Some(value)
+}
+
 // Values returns items from oldest to newest.
 func (r *RingBuffer[T]) Values() []T {
 	if r == nil || r.size == 0 {

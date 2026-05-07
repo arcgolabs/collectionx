@@ -119,6 +119,18 @@ func TestConcurrentMap_OptionAPIs(t *testing.T) {
 	require.True(t, m.GetOption("x").IsAbsent())
 }
 
+func TestConcurrentMap_GetFirst(t *testing.T) {
+	t.Parallel()
+
+	var m mapping.ConcurrentMap[string, int]
+	m.Set("x", 42)
+
+	key, value, ok := m.GetFirst()
+	require.True(t, ok)
+	require.Equal(t, "x", key)
+	require.Equal(t, 42, value)
+}
+
 func TestConcurrentMap_Range(t *testing.T) {
 	t.Parallel()
 
@@ -191,4 +203,26 @@ func TestConcurrentMap_JSONCacheReturnsDefensiveCopy(t *testing.T) {
 	m.Set("b", 2)
 	require.Contains(t, m.String(), `"a":1`)
 	require.Contains(t, m.String(), `"b":2`)
+}
+
+func TestConcurrentMap_ViewAllAndRangeLocked(t *testing.T) {
+	t.Parallel()
+
+	m := mapping.NewConcurrentMap[string, int]()
+	m.Set("a", 1)
+
+	seen := 0
+	m.ViewAll(func(items map[string]int) {
+		seen = items["a"]
+	})
+	require.Equal(t, 1, seen)
+
+	visited := 0
+	m.RangeLocked(func(key string, value int) bool {
+		require.Equal(t, "a", key)
+		require.Equal(t, 1, value)
+		visited++
+		return true
+	})
+	require.Equal(t, 1, visited)
 }

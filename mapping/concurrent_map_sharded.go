@@ -5,7 +5,6 @@ import (
 	"math/bits"
 	"sync"
 
-	"github.com/samber/lo"
 	"github.com/samber/mo"
 )
 
@@ -114,9 +113,9 @@ func (m *ShardedConcurrentMap[K, V]) SetAll(source map[K]V) {
 	if m == nil || len(source) == 0 {
 		return
 	}
-	lo.ForEach(lo.Entries(source), func(entry lo.Entry[K, V], _ int) {
-		m.Set(entry.Key, entry.Value)
-	})
+	for key, value := range source {
+		m.Set(key, value)
+	}
 }
 
 // Get returns the value for key.
@@ -130,6 +129,30 @@ func (m *ShardedConcurrentMap[K, V]) Get(key K) (V, bool) {
 	v, ok := s.core.Get(key)
 	s.mu.RUnlock()
 	return v, ok
+}
+
+// GetFirst returns one key-value pair from the map.
+// Shard and map iteration order are unspecified.
+func (m *ShardedConcurrentMap[K, V]) GetFirst() (K, V, bool) {
+	var zeroK K
+	var zeroV V
+	if m == nil {
+		return zeroK, zeroV, false
+	}
+	for i := range m.shards {
+		m.shards[i].mu.RLock()
+		var key K
+		var value V
+		ok := false
+		if m.shards[i].core != nil {
+			key, value, ok = m.shards[i].core.GetFirst()
+		}
+		m.shards[i].mu.RUnlock()
+		if ok {
+			return key, value, true
+		}
+	}
+	return zeroK, zeroV, false
 }
 
 // GetOption returns value for key as mo.Option.
@@ -239,11 +262,18 @@ func (m *ShardedConcurrentMap[K, V]) Keys() []K {
 	if m == nil {
 		return nil
 	}
-	return lo.Reduce(lo.Range(len(m.shards)), func(out []K, index int, _ int) []K {
-		m.shards[index].mu.RLock()
-		defer m.shards[index].mu.RUnlock()
-		return append(out, m.shards[index].core.Keys()...)
-	}, []K(nil))
+	var out []K
+	for i := range m.shards {
+		m.shards[i].mu.RLock()
+		if m.shards[i].core != nil {
+			m.shards[i].core.Range(func(key K, _ V) bool {
+				out = append(out, key)
+				return true
+			})
+		}
+		m.shards[i].mu.RUnlock()
+	}
+	return out
 }
 
 // Values returns a snapshot of all values (locks all shards).
@@ -251,11 +281,18 @@ func (m *ShardedConcurrentMap[K, V]) Values() []V {
 	if m == nil {
 		return nil
 	}
-	return lo.Reduce(lo.Range(len(m.shards)), func(out []V, index int, _ int) []V {
-		m.shards[index].mu.RLock()
-		defer m.shards[index].mu.RUnlock()
-		return append(out, m.shards[index].core.Values()...)
-	}, []V(nil))
+	var out []V
+	for i := range m.shards {
+		m.shards[i].mu.RLock()
+		if m.shards[i].core != nil {
+			m.shards[i].core.Range(func(_ K, value V) bool {
+				out = append(out, value)
+				return true
+			})
+		}
+		m.shards[i].mu.RUnlock()
+	}
+	return out
 }
 
 // All returns a copied built-in map (locks all shards).
@@ -282,6 +319,27 @@ func (m *ShardedConcurrentMap[K, V]) Range(fn func(key K, value V) bool) {
 	}
 	for k, v := range m.All() {
 		if !fn(k, v) {
+			return
+		}
+	}
+}
+
+// RangeLocked iterates internal shard maps under read locks without copying.
+func (m *ShardedConcurrentMap[K, V]) RangeLocked(fn func(key K, value V) bool) {
+	if m == nil || fn == nil {
+		return
+	}
+	for i := range m.shards {
+		m.shards[i].mu.RLock()
+		keepGoing := true
+		if m.shards[i].core != nil {
+			m.shards[i].core.Range(func(key K, value V) bool {
+				keepGoing = fn(key, value)
+				return keepGoing
+			})
+		}
+		m.shards[i].mu.RUnlock()
+		if !keepGoing {
 			return
 		}
 	}

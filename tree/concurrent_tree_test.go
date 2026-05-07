@@ -56,6 +56,26 @@ func TestConcurrentTree_SnapshotIsolation(t *testing.T) {
 	require.Equal(t, "child-a", node.Value())
 }
 
+func TestConcurrentTree_SnapshotAPIs(t *testing.T) {
+	tr := tree.NewConcurrentTree[int, string]()
+	require.NoError(t, tr.AddRoot(1, "root"))
+	require.NoError(t, tr.AddChild(1, 2, "child"))
+
+	require.Equal(t, []tree.NodeSnapshot[int, string]{
+		{
+			ID:    1,
+			Value: "root",
+			Children: []tree.NodeSnapshot[int, string]{
+				{ID: 2, Value: "child"},
+			},
+		},
+	}, tr.Nodes())
+	require.Equal(t, []tree.Entry[int, string]{
+		tree.RootEntry(1, "root"),
+		tree.ChildEntry(2, 1, "child"),
+	}, tr.Entries())
+}
+
 func TestConcurrentTree_ParallelAddChildren(t *testing.T) {
 	tr := tree.NewConcurrentTree[int, int]()
 	require.NoError(t, tr.AddRoot(0, 0))

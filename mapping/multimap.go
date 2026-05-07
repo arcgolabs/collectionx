@@ -106,6 +106,20 @@ func (m *MultiMap[K, V]) GetOption(key K) mo.Option[[]V] {
 	return mo.Some(values)
 }
 
+// GetFirst returns one key-values pair from the multimap.
+// Iteration order is unspecified and values are returned as an owned copy.
+func (m *MultiMap[K, V]) GetFirst() (K, []V, bool) {
+	var zero K
+	if m == nil || m.items.Len() == 0 {
+		return zero, nil, false
+	}
+	key, values, ok := m.items.GetFirst()
+	if !ok {
+		return zero, nil, false
+	}
+	return key, slices.Clone(values), true
+}
+
 // Delete removes all values for key.
 func (m *MultiMap[K, V]) Delete(key K) bool {
 	if m == nil {
@@ -217,6 +231,15 @@ func (m *MultiMap[K, V]) All() map[K][]V {
 	return out
 }
 
+// ViewAll passes the internal map to fn without copying.
+// The map and value slices must be treated as read-only and must not be retained.
+func (m *MultiMap[K, V]) ViewAll(fn func(items map[K][]V)) {
+	if m == nil || fn == nil {
+		return
+	}
+	m.items.ViewAll(fn)
+}
+
 // Clone returns a deep-copied multimap.
 func (m *MultiMap[K, V]) Clone() *MultiMap[K, V] {
 	if m == nil {
@@ -238,6 +261,15 @@ func (m *MultiMap[K, V]) Range(fn func(key K, values []V) bool) {
 	m.items.Range(func(key K, values []V) bool {
 		return fn(key, slices.Clone(values))
 	})
+}
+
+// RangeView iterates internal value slices without copying.
+// Value slices must be treated as read-only and must not be retained.
+func (m *MultiMap[K, V]) RangeView(fn func(key K, values []V) bool) {
+	if m == nil || fn == nil {
+		return
+	}
+	m.items.Range(fn)
 }
 
 func (m *MultiMap[K, V]) ensureInit() {

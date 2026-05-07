@@ -5,7 +5,6 @@ package set
 import (
 	collectionlist "github.com/arcgolabs/collectionx/list"
 	collectionmapping "github.com/arcgolabs/collectionx/mapping"
-	"github.com/samber/lo"
 	"github.com/samber/mo"
 	"slices"
 )
@@ -50,14 +49,14 @@ func (s *OrderedSet[T]) Add(items ...T) {
 		return
 	}
 
-	lo.ForEach(items, func(item T, _ int) {
+	for _, item := range items {
 		if _, exists := s.items.Get(item); exists {
-			return
+			continue
 		}
 		s.order.Add(item)
 		s.items.Set(item, struct{}{})
 		s.index.Set(item, s.order.Len()-1)
-	})
+	}
 	s.invalidateValuesCache()
 	s.invalidateSerializationCache()
 }
@@ -146,6 +145,20 @@ func (s *OrderedSet[T]) At(pos int) (T, bool) {
 		return zero, false
 	}
 	return s.order.Get(pos)
+}
+
+// GetFirst returns the first item in insertion order.
+func (s *OrderedSet[T]) GetFirst() (T, bool) {
+	return s.At(0)
+}
+
+// GetFirstOption returns the first item in insertion order as mo.Option.
+func (s *OrderedSet[T]) GetFirstOption() mo.Option[T] {
+	value, ok := s.GetFirst()
+	if !ok {
+		return mo.None[T]()
+	}
+	return mo.Some(value)
 }
 
 // Range iterates items in insertion order until fn returns false.

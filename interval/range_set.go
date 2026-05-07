@@ -138,6 +138,24 @@ func (s *RangeSet[T]) Ranges() []Range[T] {
 	return slices.Clone(s.rangesCache)
 }
 
+// GetFirst returns the first normalized range by start.
+func (s *RangeSet[T]) GetFirst() (Range[T], bool) {
+	var zero Range[T]
+	if s == nil || len(s.ranges) == 0 {
+		return zero, false
+	}
+	return s.ranges[0], true
+}
+
+// GetLast returns the last normalized range by start.
+func (s *RangeSet[T]) GetLast() (Range[T], bool) {
+	var zero Range[T]
+	if s == nil || len(s.ranges) == 0 {
+		return zero, false
+	}
+	return s.ranges[len(s.ranges)-1], true
+}
+
 // Len returns number of normalized ranges.
 func (s *RangeSet[T]) Len() int {
 	if s == nil {

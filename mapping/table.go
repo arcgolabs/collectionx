@@ -57,6 +57,25 @@ func (t *Table[R, C, V]) Get(rowKey R, columnKey C) (V, bool) {
 	return value, ok
 }
 
+// GetFirst returns one cell from the table.
+// Iteration order is unspecified.
+func (t *Table[R, C, V]) GetFirst() (R, C, V, bool) {
+	var zeroR R
+	var zeroC C
+	var zeroV V
+	if t == nil || t.size == 0 {
+		return zeroR, zeroC, zeroV, false
+	}
+	rowKey, row, ok := t.data.GetFirst()
+	if !ok {
+		return zeroR, zeroC, zeroV, false
+	}
+	for columnKey, value := range row {
+		return rowKey, columnKey, value, true
+	}
+	return zeroR, zeroC, zeroV, false
+}
+
 // GetOption returns value at (rowKey, columnKey) as mo.Option.
 func (t *Table[R, C, V]) GetOption(rowKey R, columnKey C) mo.Option[V] {
 	value, ok := t.Get(rowKey, columnKey)
@@ -294,6 +313,15 @@ func (t *Table[R, C, V]) All() map[R]map[C]V {
 		return true
 	})
 	return out
+}
+
+// ViewAll passes the internal table map to fn without copying.
+// The map and row maps must be treated as read-only and must not be retained.
+func (t *Table[R, C, V]) ViewAll(fn func(rows map[R]map[C]V)) {
+	if t == nil || fn == nil {
+		return
+	}
+	t.data.ViewAll(fn)
 }
 
 // Range iterates all cells until fn returns false.

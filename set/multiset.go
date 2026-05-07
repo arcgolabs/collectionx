@@ -2,7 +2,6 @@ package set
 
 import (
 	collectionmapping "github.com/arcgolabs/collectionx/mapping"
-	"github.com/samber/lo"
 )
 
 // MultiSet is a bag-like set with occurrence counts.
@@ -35,11 +34,11 @@ func (s *MultiSet[T]) Add(items ...T) {
 	if s == nil || len(items) == 0 {
 		return
 	}
-	lo.ForEach(items, func(item T, _ int) {
+	for _, item := range items {
 		current, _ := s.counts.Get(item)
 		s.counts.Set(item, current+1)
 		s.size++
-	})
+	}
 }
 
 // AddN inserts item n times. n <= 0 does nothing.

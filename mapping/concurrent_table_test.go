@@ -46,6 +46,11 @@ func TestConcurrentTable_OptionDeleteAndSnapshot(t *testing.T) {
 	require.False(t, tb.HasRow("missing"))
 	require.True(t, tb.HasColumn("score"))
 	require.False(t, tb.HasColumn("missing"))
+	rowKey, columnKey, firstValue, ok := tb.GetFirst()
+	require.True(t, ok)
+	require.Contains(t, []string{"u1", "u2"}, rowKey)
+	require.Contains(t, []string{"score", "level"}, columnKey)
+	require.Contains(t, []int{10, 2, 20}, firstValue)
 
 	opt := tb.GetOption("u1", "score")
 	require.True(t, opt.IsPresent())
@@ -127,4 +132,28 @@ func TestConcurrentTable_JSONCacheReturnsDefensiveCopy(t *testing.T) {
 	tb.Put("r1", "c2", 2)
 	require.Contains(t, tb.String(), `"c1":1`)
 	require.Contains(t, tb.String(), `"c2":2`)
+}
+
+func TestConcurrentTable_ViewAllAndRangeLocked(t *testing.T) {
+	t.Parallel()
+
+	var tb mapping.ConcurrentTable[string, string, int]
+	tb.Put("r1", "c1", 1)
+
+	seen := false
+	tb.ViewAll(func(rows map[string]map[string]int) {
+		require.Equal(t, 1, rows["r1"]["c1"])
+		seen = true
+	})
+	require.True(t, seen)
+
+	visited := 0
+	tb.RangeLocked(func(rowKey string, columnKey string, value int) bool {
+		require.Equal(t, "r1", rowKey)
+		require.Equal(t, "c1", columnKey)
+		require.Equal(t, 1, value)
+		visited++
+		return true
+	})
+	require.Equal(t, 1, visited)
 }

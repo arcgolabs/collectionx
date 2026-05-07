@@ -1,5 +1,7 @@
 package list
 
+import "github.com/samber/mo"
+
 // Deque is a growable double-ended queue backed by a ring buffer.
 // Zero value is ready to use.
 type Deque[T any] struct {
@@ -79,6 +81,20 @@ func (d *Deque[T]) Front() (T, bool) {
 	return d.buf[d.head], true
 }
 
+// GetFirst returns the front item without removing it.
+func (d *Deque[T]) GetFirst() (T, bool) {
+	return d.Front()
+}
+
+// GetFirstOption returns the front item as mo.Option.
+func (d *Deque[T]) GetFirstOption() mo.Option[T] {
+	value, ok := d.GetFirst()
+	if !ok {
+		return mo.None[T]()
+	}
+	return mo.Some(value)
+}
+
 // Back returns back item without removing it.
 func (d *Deque[T]) Back() (T, bool) {
 	var zero T
@@ -86,6 +102,20 @@ func (d *Deque[T]) Back() (T, bool) {
 		return zero, false
 	}
 	return d.buf[d.physicalIndex(d.size-1)], true
+}
+
+// GetLast returns the back item without removing it.
+func (d *Deque[T]) GetLast() (T, bool) {
+	return d.Back()
+}
+
+// GetLastOption returns the back item as mo.Option.
+func (d *Deque[T]) GetLastOption() mo.Option[T] {
+	value, ok := d.GetLast()
+	if !ok {
+		return mo.None[T]()
+	}
+	return mo.Some(value)
 }
 
 // Get returns item at logical index from front.

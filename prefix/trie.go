@@ -94,6 +94,34 @@ func (t *Trie[V]) GetOption(key string) mo.Option[V] {
 	return mo.Some(value)
 }
 
+// GetFirst returns the first key-value pair in lexicographic key order.
+func (t *Trie[V]) GetFirst() (string, V, bool) {
+	return t.GetFirstWithPrefix("")
+}
+
+// GetFirstWithPrefix returns the first key-value pair under prefix in lexicographic key order.
+func (t *Trie[V]) GetFirstWithPrefix(prefix string) (string, V, bool) {
+	var zero V
+	if t == nil || t.root == nil {
+		return "", zero, false
+	}
+	node, ok := t.findNode(prefix)
+	if !ok || node.valueCount == 0 {
+		return "", zero, false
+	}
+
+	var key string
+	var value V
+	found := false
+	t.rangePrefix(node, prefix, func(currentKey string, currentValue V) bool {
+		key = currentKey
+		value = currentValue
+		found = true
+		return false
+	})
+	return key, value, found
+}
+
 // Has reports whether exact key exists.
 func (t *Trie[V]) Has(key string) bool {
 	_, ok := t.Get(key)

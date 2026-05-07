@@ -179,6 +179,18 @@ func TestGridCellPredicates(t *testing.T) {
 	require.False(t, g.AllCellsMatch(func(_ int, _ int, value int) bool { return value%2 == 0 }))
 }
 
+func TestGrid_ViewRow(t *testing.T) {
+	t.Parallel()
+
+	g := list.NewGrid[int]([]int{1, 2}, []int{3})
+	var row []int
+	ok := g.ViewRow(0, func(items []int) {
+		row = append(row, items...)
+	})
+	require.True(t, ok)
+	require.Equal(t, []int{1, 2}, row)
+}
+
 func assertGridCell[T comparable](t *testing.T, g *list.Grid[T], rowIndex, columnIndex int, expected T) {
 	t.Helper()
 

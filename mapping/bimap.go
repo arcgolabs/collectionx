@@ -56,6 +56,17 @@ func (m *BiMap[K, V]) GetByValue(value V) (K, bool) {
 	return key, ok
 }
 
+// GetFirst returns one key-value pair from the bimap.
+// Iteration order is unspecified.
+func (m *BiMap[K, V]) GetFirst() (K, V, bool) {
+	var zeroK K
+	var zeroV V
+	if m == nil {
+		return zeroK, zeroV, false
+	}
+	return m.kv.GetFirst()
+}
+
 // GetValueOption returns value by key as mo.Option.
 func (m *BiMap[K, V]) GetValueOption(key K) mo.Option[V] {
 	value, ok := m.GetByKey(key)

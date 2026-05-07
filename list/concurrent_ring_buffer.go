@@ -88,6 +88,40 @@ func (r *ConcurrentRingBuffer[T]) Peek() (T, bool) {
 	return r.buffer.Peek()
 }
 
+// GetFirst returns the oldest value without removing it.
+func (r *ConcurrentRingBuffer[T]) GetFirst() (T, bool) {
+	return r.Peek()
+}
+
+// GetFirstOption returns the oldest value as mo.Option.
+func (r *ConcurrentRingBuffer[T]) GetFirstOption() mo.Option[T] {
+	value, ok := r.GetFirst()
+	if !ok {
+		return mo.None[T]()
+	}
+	return mo.Some(value)
+}
+
+// GetLast returns the newest value without removing it.
+func (r *ConcurrentRingBuffer[T]) GetLast() (T, bool) {
+	var zero T
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if r.buffer == nil {
+		return zero, false
+	}
+	return r.buffer.GetLast()
+}
+
+// GetLastOption returns the newest value as mo.Option.
+func (r *ConcurrentRingBuffer[T]) GetLastOption() mo.Option[T] {
+	value, ok := r.GetLast()
+	if !ok {
+		return mo.None[T]()
+	}
+	return mo.Some(value)
+}
+
 // Values returns items from oldest to newest.
 func (r *ConcurrentRingBuffer[T]) Values() []T {
 	r.mu.RLock()

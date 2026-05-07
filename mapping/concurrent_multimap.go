@@ -98,6 +98,21 @@ func (m *ConcurrentMultiMap[K, V]) GetOption(key K) mo.Option[[]V] {
 	return mo.Some(values)
 }
 
+// GetFirst returns one key-values pair from the multimap snapshot.
+// Iteration order is unspecified and values are returned as an owned copy.
+func (m *ConcurrentMultiMap[K, V]) GetFirst() (K, []V, bool) {
+	var zero K
+	if m == nil {
+		return zero, nil, false
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.core == nil {
+		return zero, nil, false
+	}
+	return m.core.GetFirst()
+}
+
 // Delete removes all values for key.
 func (m *ConcurrentMultiMap[K, V]) Delete(key K) bool {
 	if m == nil {
@@ -218,6 +233,21 @@ func (m *ConcurrentMultiMap[K, V]) All() map[K][]V {
 	return m.core.All()
 }
 
+// ViewAll passes the internal map to fn under a read lock without copying.
+// The map and value slices must be treated as read-only and must not be retained.
+func (m *ConcurrentMultiMap[K, V]) ViewAll(fn func(items map[K][]V)) {
+	if m == nil || fn == nil {
+		return
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.core == nil {
+		fn(nil)
+		return
+	}
+	m.core.ViewAll(fn)
+}
+
 // Snapshot returns an immutable-style copy in a normal MultiMap.
 func (m *ConcurrentMultiMap[K, V]) Snapshot() *MultiMap[K, V] {
 	if m == nil {
@@ -291,6 +321,20 @@ func (m *ConcurrentMultiMap[K, V]) Range(fn func(key K, values []V) bool) {
 			return
 		}
 	}
+}
+
+// RangeLocked iterates internal value slices under a read lock without copying.
+// Value slices must be treated as read-only and must not be retained.
+func (m *ConcurrentMultiMap[K, V]) RangeLocked(fn func(key K, values []V) bool) {
+	if m == nil || fn == nil {
+		return
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.core == nil {
+		return
+	}
+	m.core.RangeView(fn)
 }
 
 func (m *ConcurrentMultiMap[K, V]) ensureInitLocked() {

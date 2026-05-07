@@ -20,6 +20,14 @@ func TestMultiMap_BasicOps(t *testing.T) {
 	require.Equal(t, 2, m.Len())
 	require.Equal(t, 4, m.ValueCount())
 	require.Equal(t, []int{1, 2, 3}, m.Get("a"))
+	key, values, ok := m.GetFirst()
+	require.True(t, ok)
+	require.Contains(t, []string{"a", "b"}, key)
+	if key == "a" {
+		require.Equal(t, []int{1, 2, 3}, values)
+	} else {
+		require.Equal(t, []int{10}, values)
+	}
 
 	m.Set("a", 9)
 	require.Equal(t, []int{9}, m.Get("a"))
@@ -137,4 +145,27 @@ func TestMultiMap_JSONCacheReturnsDefensiveCopy(t *testing.T) {
 
 	m.Put("a", 2)
 	require.Equal(t, `{"a":[1,2]}`, m.String())
+}
+
+func TestMultiMap_ViewAllAndRangeView(t *testing.T) {
+	t.Parallel()
+
+	m := mapping.NewMultiMap[string, int]()
+	m.PutAll("a", 1, 2)
+
+	seen := false
+	m.ViewAll(func(items map[string][]int) {
+		require.Equal(t, []int{1, 2}, items["a"])
+		seen = true
+	})
+	require.True(t, seen)
+
+	visited := 0
+	m.RangeView(func(key string, values []int) bool {
+		require.Equal(t, "a", key)
+		require.Equal(t, []int{1, 2}, values)
+		visited++
+		return true
+	})
+	require.Equal(t, 1, visited)
 }

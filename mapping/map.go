@@ -68,6 +68,20 @@ func (m *Map[K, V]) Get(key K) (V, bool) {
 	return v, ok
 }
 
+// GetFirst returns one key-value pair from the map.
+// Iteration order is unspecified; use OrderedMap when order matters.
+func (m *Map[K, V]) GetFirst() (K, V, bool) {
+	var zeroK K
+	var zeroV V
+	if m == nil || len(m.items) == 0 {
+		return zeroK, zeroV, false
+	}
+	for key, value := range m.items {
+		return key, value, true
+	}
+	return zeroK, zeroV, false
+}
+
 // GetOption returns value for key as mo.Option.
 func (m *Map[K, V]) GetOption(key K) mo.Option[V] {
 	value, ok := m.Get(key)
@@ -191,6 +205,15 @@ func (m *Map[K, V]) All() map[K]V {
 		return map[K]V{}
 	}
 	return maps.Clone(m.items)
+}
+
+// ViewAll passes the internal map to fn without copying.
+// The map must be treated as read-only and must not be retained.
+func (m *Map[K, V]) ViewAll(fn func(items map[K]V)) {
+	if m == nil || fn == nil {
+		return
+	}
+	fn(m.items)
 }
 
 // Range iterates all entries until fn returns false.

@@ -16,6 +16,12 @@ func TestBitSet_BasicOps(t *testing.T) {
 	require.False(t, b.Contains(2))
 	require.Equal(t, 3, b.Len())
 	require.Equal(t, []int{1, 3, 64}, b.Values())
+	first, ok := b.GetFirst()
+	require.True(t, ok)
+	require.Equal(t, 1, first)
+	last, ok := b.GetLast()
+	require.True(t, ok)
+	require.Equal(t, 64, last)
 
 	require.True(t, b.Set(2))
 	require.False(t, b.Set(2))

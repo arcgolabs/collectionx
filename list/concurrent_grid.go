@@ -110,6 +110,20 @@ func (g *ConcurrentGrid[T]) GetRow(index int) ([]T, bool) {
 	return g.core.GetRow(index)
 }
 
+// ViewRow passes the internal row slice to fn under a read lock without copying.
+// The slice must be treated as read-only and must not be retained.
+func (g *ConcurrentGrid[T]) ViewRow(index int, fn func(row []T)) bool {
+	if g == nil || fn == nil {
+		return false
+	}
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	if g.core == nil {
+		return false
+	}
+	return g.core.ViewRow(index, fn)
+}
+
 // GetRowList returns a copied row list at index.
 func (g *ConcurrentGrid[T]) GetRowList(index int) (*List[T], bool) {
 	if g == nil {
@@ -204,6 +218,20 @@ func (g *ConcurrentGrid[T]) Range(fn func(index int, row []T) bool) {
 		return
 	}
 	g.Snapshot().Range(fn)
+}
+
+// RangeLocked iterates internal rows under a read lock without copying.
+// Row slices must be treated as read-only and must not be retained.
+func (g *ConcurrentGrid[T]) RangeLocked(fn func(index int, row []T) bool) {
+	if g == nil || fn == nil {
+		return
+	}
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	if g.core == nil {
+		return
+	}
+	g.core.Range(fn)
 }
 
 // Snapshot returns an immutable-style copy in a normal Grid.

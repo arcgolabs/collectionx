@@ -217,6 +217,21 @@ func (l *ConcurrentList[T]) Values() []T {
 	return l.core.Values()
 }
 
+// ViewValues passes the internal backing slice to fn under a read lock without copying.
+// The slice must be treated as read-only and must not be retained.
+func (l *ConcurrentList[T]) ViewValues(fn func(items []T)) {
+	if l == nil || fn == nil {
+		return
+	}
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	if l.core == nil {
+		fn(nil)
+		return
+	}
+	fn(l.core.items)
+}
+
 // Range iterates a stable snapshot from left to right until fn returns false.
 func (l *ConcurrentList[T]) Range(fn func(index int, item T) bool) {
 	if fn == nil {

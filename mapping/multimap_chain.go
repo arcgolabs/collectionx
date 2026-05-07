@@ -4,7 +4,6 @@ import (
 	"slices"
 
 	collectionlist "github.com/arcgolabs/collectionx/list"
-	"github.com/samber/lo"
 )
 
 // WhereKeys returns a new multimap containing only keys that match predicate.
@@ -46,7 +45,12 @@ func (m *MultiMap[K, V]) WhereValues(predicate func(key K, value V) bool) *Multi
 	}
 	filtered := NewMultiMapWithCapacity[K, V](m.items.Len())
 	m.items.Range(func(key K, values []V) bool {
-		matching := lo.Filter(values, func(value V, _ int) bool { return predicate(key, value) })
+		matching := make([]V, 0, len(values))
+		for _, value := range values {
+			if predicate(key, value) {
+				matching = append(matching, value)
+			}
+		}
 		if len(matching) > 0 {
 			filtered.items.Set(key, matching)
 			filtered.valueCount += len(matching)
@@ -63,7 +67,12 @@ func (m *MultiMap[K, V]) RejectValues(predicate func(key K, value V) bool) *Mult
 	}
 	rejected := NewMultiMapWithCapacity[K, V](m.items.Len())
 	m.items.Range(func(key K, values []V) bool {
-		remaining := lo.Reject(values, func(value V, _ int) bool { return predicate(key, value) })
+		remaining := make([]V, 0, len(values))
+		for _, value := range values {
+			if !predicate(key, value) {
+				remaining = append(remaining, value)
+			}
+		}
 		if len(remaining) > 0 {
 			rejected.items.Set(key, remaining)
 			rejected.valueCount += len(remaining)
@@ -97,7 +106,9 @@ func (m *MultiMap[K, V]) EachValue(fn func(key K, value V)) *MultiMap[K, V] {
 		return m
 	}
 	m.items.Range(func(key K, values []V) bool {
-		lo.ForEach(values, func(value V, _ int) { fn(key, value) })
+		for _, value := range values {
+			fn(key, value)
+		}
 		return true
 	})
 	return m
@@ -113,11 +124,12 @@ func (m *MultiMap[K, V]) FirstValueWhere(predicate func(key K, value V) bool) (K
 	foundK, foundV := zeroK, zeroV
 	ok := false
 	m.items.Range(func(key K, values []V) bool {
-		value, matched := lo.Find(values, func(value V) bool { return predicate(key, value) })
-		if matched {
-			foundK, foundV = key, value
-			ok = true
-			return false
+		for _, value := range values {
+			if predicate(key, value) {
+				foundK, foundV = key, value
+				ok = true
+				return false
+			}
 		}
 		return true
 	})
@@ -137,11 +149,13 @@ func (m *MultiMap[K, V]) AllValuesMatch(predicate func(key K, value V) bool) boo
 	}
 	matched := true
 	m.items.Range(func(key K, values []V) bool {
-		if lo.EveryBy(values, func(value V) bool { return predicate(key, value) }) {
-			return true
+		for _, value := range values {
+			if !predicate(key, value) {
+				matched = false
+				return false
+			}
 		}
-		matched = false
-		return false
+		return true
 	})
 	return matched
 }

@@ -6,7 +6,7 @@ import (
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (t *Tree[K, V]) MarshalBinary() ([]byte, error) {
-	data, err := marshalBinaryValue(t.toJSONNodes())
+	data, err := marshalBinaryValue(t.Nodes())
 	if err != nil {
 		return nil, fmt.Errorf("marshal tree binary: %w", err)
 	}
@@ -23,7 +23,7 @@ func (t *Tree[K, V]) UnmarshalBinary(data []byte) error {
 	if t == nil {
 		return fmt.Errorf("unmarshal tree binary: nil receiver")
 	}
-	var roots []jsonNode[K, V]
+	var roots []NodeSnapshot[K, V]
 	if err := unmarshalBinaryValue(data, &roots); err != nil {
 		return fmt.Errorf("unmarshal tree binary: %w", err)
 	}

@@ -25,6 +25,11 @@ func TestTable_BasicOps(t *testing.T) {
 	require.Equal(t, 2, tb.RowCount())
 
 	require.True(t, tb.Has("u2", "score"))
+	rowKey, columnKey, firstValue, ok := tb.GetFirst()
+	require.True(t, ok)
+	require.Contains(t, []string{"u1", "u2"}, rowKey)
+	require.Contains(t, []string{"score", "level"}, columnKey)
+	require.Contains(t, []int{100, 8, 90}, firstValue)
 	require.True(t, tb.Delete("u2", "score"))
 	require.False(t, tb.Has("u2", "score"))
 	require.Equal(t, 2, tb.Len())
@@ -181,4 +186,18 @@ func TestTable_JSONCacheReturnsDefensiveCopy(t *testing.T) {
 	tb.Put("r1", "c2", 2)
 	require.Contains(t, tb.String(), `"c1":1`)
 	require.Contains(t, tb.String(), `"c2":2`)
+}
+
+func TestTable_ViewAll(t *testing.T) {
+	t.Parallel()
+
+	tb := mapping.NewTable[string, string, int]()
+	tb.Put("r1", "c1", 1)
+
+	seen := false
+	tb.ViewAll(func(rows map[string]map[string]int) {
+		require.Equal(t, 1, rows["r1"]["c1"])
+		seen = true
+	})
+	require.True(t, seen)
 }

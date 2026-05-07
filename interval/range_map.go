@@ -155,6 +155,24 @@ func (m *RangeMap[T, V]) Entries() []RangeEntry[T, V] {
 	return slices.Clone(m.entriesCache)
 }
 
+// GetFirst returns the first entry by range start.
+func (m *RangeMap[T, V]) GetFirst() (RangeEntry[T, V], bool) {
+	var zero RangeEntry[T, V]
+	if m == nil || len(m.entries) == 0 {
+		return zero, false
+	}
+	return m.entries[0], true
+}
+
+// GetLast returns the last entry by range start.
+func (m *RangeMap[T, V]) GetLast() (RangeEntry[T, V], bool) {
+	var zero RangeEntry[T, V]
+	if m == nil || len(m.entries) == 0 {
+		return zero, false
+	}
+	return m.entries[len(m.entries)-1], true
+}
+
 // Len returns non-overlapping entry count.
 func (m *RangeMap[T, V]) Len() int {
 	if m == nil {

@@ -11,7 +11,7 @@ func (t *Tree[K, V]) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("unmarshal tree json: nil receiver")
 	}
 
-	var roots []jsonNode[K, V]
+	var roots []NodeSnapshot[K, V]
 	if err := json.Unmarshal(data, &roots); err != nil {
 		return fmt.Errorf("unmarshal tree json: %w", err)
 	}
@@ -44,7 +44,7 @@ func (t *ConcurrentTree[K, V]) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func appendJSONNode[K comparable, V any](tree *Tree[K, V], node jsonNode[K, V], parent *jsonNode[K, V]) error {
+func appendJSONNode[K comparable, V any](tree *Tree[K, V], node NodeSnapshot[K, V], parent *NodeSnapshot[K, V]) error {
 	if parent == nil {
 		if err := tree.AddRoot(node.ID, node.Value); err != nil {
 			return err

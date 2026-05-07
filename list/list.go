@@ -254,6 +254,15 @@ func (l *List[T]) Values() []T {
 	return slices.Clone(l.items)
 }
 
+// ViewValues passes the internal backing slice to fn without copying.
+// The slice must be treated as read-only and must not be retained.
+func (l *List[T]) ViewValues(fn func(items []T)) {
+	if l == nil || fn == nil {
+		return
+	}
+	fn(l.items)
+}
+
 // Range iterates list from left to right until fn returns false.
 func (l *List[T]) Range(fn func(index int, item T) bool) {
 	if l == nil || fn == nil {

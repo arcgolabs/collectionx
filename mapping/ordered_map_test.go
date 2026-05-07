@@ -41,6 +41,10 @@ func TestOrderedMap_DeleteAndAt(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, 1, firstKey)
 	require.Equal(t, "a", firstValue)
+	firstKey, firstValue, ok = m.GetFirst()
+	require.True(t, ok)
+	require.Equal(t, 1, firstKey)
+	require.Equal(t, "a", firstValue)
 
 	lastKey, lastValue, ok := m.Last()
 	require.True(t, ok)

@@ -130,6 +130,32 @@ func (s *Set[T]) Values() []T {
 	return s.items.Keys()
 }
 
+// GetFirst returns one item from the set.
+// Iteration order is unspecified; use OrderedSet when order matters.
+func (s *Set[T]) GetFirst() (T, bool) {
+	var zero T
+	if s == nil || s.items.Len() == 0 {
+		return zero, false
+	}
+	var first T
+	ok := false
+	s.items.Range(func(item T, _ struct{}) bool {
+		first = item
+		ok = true
+		return false
+	})
+	return first, ok
+}
+
+// GetFirstOption returns one item from the set as mo.Option.
+func (s *Set[T]) GetFirstOption() mo.Option[T] {
+	value, ok := s.GetFirst()
+	if !ok {
+		return mo.None[T]()
+	}
+	return mo.Some(value)
+}
+
 // Range iterates all items until fn returns false.
 func (s *Set[T]) Range(fn func(item T) bool) {
 	if s == nil || fn == nil {

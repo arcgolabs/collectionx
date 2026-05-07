@@ -55,6 +55,11 @@ func (pq *PriorityQueue[T]) Peek() (T, bool) {
 	return pq.h.items[0], true
 }
 
+// GetFirst returns the current top-priority value without removing it.
+func (pq *PriorityQueue[T]) GetFirst() (T, bool) {
+	return pq.Peek()
+}
+
 // Len returns item count.
 func (pq *PriorityQueue[T]) Len() int {
 	if pq == nil || pq.h == nil {

@@ -20,6 +20,12 @@ func TestRangeSet_AddMergeAndContains(t *testing.T) {
 	ranges := s.Ranges()
 	require.Equal(t, 1, len(ranges))
 	require.Equal(t, interval.Range[int]{Start: 1, End: 12}, ranges[0])
+	first, ok := s.GetFirst()
+	require.True(t, ok)
+	require.Equal(t, interval.Range[int]{Start: 1, End: 12}, first)
+	last, ok := s.GetLast()
+	require.True(t, ok)
+	require.Equal(t, interval.Range[int]{Start: 1, End: 12}, last)
 	require.True(t, s.Contains(8))
 	require.False(t, s.Contains(12))
 }

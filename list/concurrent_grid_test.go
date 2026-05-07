@@ -98,3 +98,22 @@ func TestNewConcurrentGridWithCapacity(t *testing.T) {
 	g := list.NewConcurrentGridWithCapacity[int](4, []int{1}, []int{2, 3})
 	require.Equal(t, [][]int{{1}, {2, 3}}, g.Values())
 }
+
+func TestConcurrentGrid_ViewRowAndRangeLocked(t *testing.T) {
+	t.Parallel()
+
+	g := list.NewConcurrentGrid[int]([]int{1, 2}, []int{3})
+	var row []int
+	ok := g.ViewRow(0, func(items []int) {
+		row = append(row, items...)
+	})
+	require.True(t, ok)
+	require.Equal(t, []int{1, 2}, row)
+
+	var rows [][]int
+	g.RangeLocked(func(_ int, items []int) bool {
+		rows = append(rows, append([]int(nil), items...))
+		return true
+	})
+	require.Equal(t, [][]int{{1, 2}, {3}}, rows)
+}

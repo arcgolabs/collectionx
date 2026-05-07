@@ -103,6 +103,20 @@ func (g *Grid[T]) GetRow(index int) ([]T, bool) {
 	return row.Values(), true
 }
 
+// ViewRow passes the internal row slice to fn without copying.
+// The slice must be treated as read-only and must not be retained.
+func (g *Grid[T]) ViewRow(index int, fn func(row []T)) bool {
+	if g == nil || fn == nil {
+		return false
+	}
+	row, ok := g.rows.Get(index)
+	if !ok || row == nil {
+		return false
+	}
+	fn(row.items)
+	return true
+}
+
 // GetRowList returns a copied row list at index.
 func (g *Grid[T]) GetRowList(index int) (*List[T], bool) {
 	if g == nil {

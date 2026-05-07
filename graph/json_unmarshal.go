@@ -11,7 +11,7 @@ func (g *Graph[K, V]) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("unmarshal graph JSON: nil receiver")
 	}
 
-	var snap graphSnapshot[K, V]
+	var snap Snapshot[K, V]
 	if err := json.Unmarshal(data, &snap); err != nil {
 		return fmt.Errorf("unmarshal graph JSON: %w", err)
 	}

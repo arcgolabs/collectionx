@@ -4,14 +4,8 @@ import (
 	"fmt"
 )
 
-type jsonNode[K comparable, V any] struct {
-	ID       K                `json:"id"`
-	Value    V                `json:"value"`
-	Children []jsonNode[K, V] `json:"children,omitempty"`
-}
-
 func (t *Tree[K, V]) marshalJSONBytes() ([]byte, error) {
-	return marshalTreeJSON("tree", t.toJSONNodes())
+	return marshalTreeJSON("tree", t.Nodes())
 }
 
 // MarshalJSON implements json.Marshaler.
@@ -46,42 +40,6 @@ func (t *ConcurrentTree[K, V]) MarshalJSON() ([]byte, error) {
 func (t *ConcurrentTree[K, V]) String() string {
 	data, err := t.marshalJSONBytes()
 	return jsonResultString(data, err, "[]")
-}
-
-func (t *Tree[K, V]) toJSONNodes() []jsonNode[K, V] {
-	if t == nil || t.IsEmpty() {
-		return nil
-	}
-
-	roots := make([]jsonNode[K, V], 0, t.roots.Len())
-	rootCount := t.roots.Len()
-	for index := range rootCount {
-		root, _ := t.roots.Get(index)
-		roots = append(roots, toJSONNode(root))
-	}
-	return roots
-}
-
-func toJSONNode[K comparable, V any](node *Node[K, V]) jsonNode[K, V] {
-	if node == nil {
-		return jsonNode[K, V]{}
-	}
-
-	jsonNodeValue := jsonNode[K, V]{
-		ID:    node.ID(),
-		Value: node.Value(),
-	}
-	if node.children.Len() == 0 {
-		return jsonNodeValue
-	}
-
-	jsonNodeValue.Children = make([]jsonNode[K, V], 0, node.children.Len())
-	childCount := node.children.Len()
-	for index := range childCount {
-		child, _ := node.children.Get(index)
-		jsonNodeValue.Children = append(jsonNodeValue.Children, toJSONNode(child))
-	}
-	return jsonNodeValue
 }
 
 func marshalTreeJSON[T any](kind string, value T) ([]byte, error) {

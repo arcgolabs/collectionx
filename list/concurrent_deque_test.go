@@ -16,6 +16,14 @@ func TestConcurrentDeque_Basic(t *testing.T) {
 	d.PushFront(1)
 
 	require.Equal(t, []int{1, 2, 3}, d.Values())
+	first, ok := d.GetFirst()
+	require.True(t, ok)
+	require.Equal(t, 1, first)
+	last, ok := d.GetLast()
+	require.True(t, ok)
+	require.Equal(t, 3, last)
+	require.True(t, d.GetFirstOption().IsPresent())
+	require.True(t, d.GetLastOption().IsPresent())
 
 	value, ok := d.PopFront()
 	require.True(t, ok)

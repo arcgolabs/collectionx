@@ -67,6 +67,22 @@ func (m *ConcurrentMap[K, V]) Get(key K) (V, bool) {
 	return m.core.Get(key)
 }
 
+// GetFirst returns one key-value pair from the map.
+// Iteration order is unspecified; use an ordered map when order matters.
+func (m *ConcurrentMap[K, V]) GetFirst() (K, V, bool) {
+	var zeroK K
+	var zeroV V
+	if m == nil {
+		return zeroK, zeroV, false
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.core == nil {
+		return zeroK, zeroV, false
+	}
+	return m.core.GetFirst()
+}
+
 // GetOption returns value for key as mo.Option.
 func (m *ConcurrentMap[K, V]) GetOption(key K) mo.Option[V] {
 	value, ok := m.Get(key)
@@ -248,6 +264,21 @@ func (m *ConcurrentMap[K, V]) All() map[K]V {
 	return m.core.All()
 }
 
+// ViewAll passes the internal map to fn under a read lock without copying.
+// The map must be treated as read-only and must not be retained.
+func (m *ConcurrentMap[K, V]) ViewAll(fn func(items map[K]V)) {
+	if m == nil || fn == nil {
+		return
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.core == nil {
+		fn(nil)
+		return
+	}
+	fn(m.core.items)
+}
+
 // Range iterates a stable snapshot until fn returns false.
 func (m *ConcurrentMap[K, V]) Range(fn func(key K, value V) bool) {
 	if m == nil || fn == nil {
@@ -258,6 +289,19 @@ func (m *ConcurrentMap[K, V]) Range(fn func(key K, value V) bool) {
 			return
 		}
 	}
+}
+
+// RangeLocked iterates internal entries under a read lock without copying.
+func (m *ConcurrentMap[K, V]) RangeLocked(fn func(key K, value V) bool) {
+	if m == nil || fn == nil {
+		return
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.core == nil {
+		return
+	}
+	m.core.Range(fn)
 }
 
 // WhereEntries returns a filtered snapshot map.

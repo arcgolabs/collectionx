@@ -21,6 +21,14 @@ func TestTrie_BasicOps(t *testing.T) {
 	require.True(t, tr.HasPrefix("ca"))
 	require.False(t, tr.Has("c"))
 	require.Equal(t, 2, tr.Len())
+	key, firstValue, ok := tr.GetFirst()
+	require.True(t, ok)
+	require.Equal(t, "car", key)
+	require.Equal(t, 2, firstValue)
+	key, firstValue, ok = tr.GetFirstWithPrefix("cat")
+	require.True(t, ok)
+	require.Equal(t, "cat", key)
+	require.Equal(t, 9, firstValue)
 }
 
 func TestTrie_PrefixAndDelete(t *testing.T) {

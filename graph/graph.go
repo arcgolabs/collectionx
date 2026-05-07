@@ -312,11 +312,11 @@ func (g *Graph[K, V]) RangeEdges(fn func(from, to K) bool) {
 		return
 	}
 
-	emitted := make(map[graphEdgeSnapshot[K]]struct{}, g.edgeCount*2)
+	emitted := make(map[EdgeSnapshot[K]]struct{}, g.edgeCount*2)
 	for _, from := range g.order {
 		node := g.nodes[from]
 		for _, to := range node.order {
-			edge := graphEdgeSnapshot[K]{From: from, To: to}
+			edge := EdgeSnapshot[K]{From: from, To: to}
 			if _, seen := emitted[edge]; seen {
 				continue
 			}
@@ -324,7 +324,7 @@ func (g *Graph[K, V]) RangeEdges(fn func(from, to K) bool) {
 				return
 			}
 			emitted[edge] = struct{}{}
-			emitted[graphEdgeSnapshot[K]{From: to, To: from}] = struct{}{}
+			emitted[EdgeSnapshot[K]{From: to, To: from}] = struct{}{}
 		}
 	}
 }

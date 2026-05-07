@@ -66,6 +66,24 @@ func TestSet_RangeStop(t *testing.T) {
 	require.Equal(t, 1, visited)
 }
 
+func TestSet_GetFirst(t *testing.T) {
+	t.Parallel()
+
+	s := set.NewSet(1, 2, 3)
+	value, ok := s.GetFirst()
+	require.True(t, ok)
+	require.Contains(t, []int{1, 2, 3}, value)
+
+	option := s.GetFirstOption()
+	require.True(t, option.IsPresent())
+
+	empty := set.NewSet[int]()
+	value, ok = empty.GetFirst()
+	require.False(t, ok)
+	require.Zero(t, value)
+	require.True(t, empty.GetFirstOption().IsAbsent())
+}
+
 func TestSet_Merge(t *testing.T) {
 	t.Parallel()
 

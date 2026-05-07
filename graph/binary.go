@@ -6,7 +6,7 @@ import (
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (g *Graph[K, V]) MarshalBinary() ([]byte, error) {
-	data, err := marshalBinaryValue(g.snapshot())
+	data, err := marshalBinaryValue(g.Snapshot())
 	if err != nil {
 		return nil, fmt.Errorf("marshal graph binary: %w", err)
 	}
@@ -24,7 +24,7 @@ func (g *Graph[K, V]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unmarshal graph binary: nil receiver")
 	}
 
-	var snap graphSnapshot[K, V]
+	var snap Snapshot[K, V]
 	if err := unmarshalBinaryValue(data, &snap); err != nil {
 		return fmt.Errorf("unmarshal graph binary: %w", err)
 	}

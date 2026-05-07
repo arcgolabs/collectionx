@@ -176,6 +176,30 @@ func (s *ConcurrentSet[T]) Values() []T {
 	return s.core.Values()
 }
 
+// GetFirst returns one item from the set.
+// Iteration order is unspecified; use an ordered set when order matters.
+func (s *ConcurrentSet[T]) GetFirst() (T, bool) {
+	var zero T
+	if s == nil {
+		return zero, false
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.core == nil {
+		return zero, false
+	}
+	return s.core.GetFirst()
+}
+
+// GetFirstOption returns one item from the set as mo.Option.
+func (s *ConcurrentSet[T]) GetFirstOption() mo.Option[T] {
+	value, ok := s.GetFirst()
+	if !ok {
+		return mo.None[T]()
+	}
+	return mo.Some(value)
+}
+
 // Range iterates a stable snapshot until fn returns false.
 func (s *ConcurrentSet[T]) Range(fn func(item T) bool) {
 	if s == nil || fn == nil {

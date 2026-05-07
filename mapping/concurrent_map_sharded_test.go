@@ -23,6 +23,11 @@ func TestShardedConcurrentMap_Basic(t *testing.T) {
 	require.False(t, ok)
 	require.Equal(t, 30, v)
 
+	key, value, ok := m.GetFirst()
+	require.True(t, ok)
+	require.Contains(t, []int{1, 2, 3}, key)
+	require.Contains(t, []int{10, 20, 30}, value)
+
 	ok = m.Delete(2)
 	require.True(t, ok)
 	_, ok = m.Get(2)
@@ -59,4 +64,21 @@ func TestShardedConcurrentMap_StringKeys(t *testing.T) {
 	v, ok := m.Get("a")
 	require.True(t, ok)
 	require.Equal(t, 1, v)
+}
+
+func TestShardedConcurrentMap_RangeLocked(t *testing.T) {
+	t.Parallel()
+
+	m := mapping.NewShardedConcurrentMap[int, int](4, mapping.HashInt)
+	m.Set(1, 10)
+	m.Set(2, 20)
+
+	visited := 0
+	m.RangeLocked(func(key int, value int) bool {
+		require.Contains(t, []int{1, 2}, key)
+		require.Contains(t, []int{10, 20}, value)
+		visited++
+		return true
+	})
+	require.Equal(t, 2, visited)
 }

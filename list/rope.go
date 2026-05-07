@@ -107,6 +107,11 @@ func (r *RopeList[T]) Get(index int) (T, bool) {
 	return r.root.at(index), true
 }
 
+// GetFirst returns the first item.
+func (r *RopeList[T]) GetFirst() (T, bool) {
+	return r.Get(0)
+}
+
 // GetOption returns item at index as mo.Option.
 func (r *RopeList[T]) GetOption(index int) mo.Option[T] {
 	v, ok := r.Get(index)
@@ -114,6 +119,25 @@ func (r *RopeList[T]) GetOption(index int) mo.Option[T] {
 		return mo.None[T]()
 	}
 	return mo.Some(v)
+}
+
+// GetFirstOption returns the first item as mo.Option.
+func (r *RopeList[T]) GetFirstOption() mo.Option[T] {
+	return r.GetOption(0)
+}
+
+// GetLast returns the last item.
+func (r *RopeList[T]) GetLast() (T, bool) {
+	return r.Get(r.Len() - 1)
+}
+
+// GetLastOption returns the last item as mo.Option.
+func (r *RopeList[T]) GetLastOption() mo.Option[T] {
+	value, ok := r.GetLast()
+	if !ok {
+		return mo.None[T]()
+	}
+	return mo.Some(value)
 }
 
 // Set replaces item at index.

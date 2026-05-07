@@ -54,6 +54,10 @@ func TestConcurrentMultiMap_OptionAndSnapshot(t *testing.T) {
 	values, ok := opt.Get()
 	require.True(t, ok)
 	require.Equal(t, []int{1, 2, 3, 4}, values)
+	key, firstValues, ok := m.GetFirst()
+	require.True(t, ok)
+	require.Equal(t, "a", key)
+	require.Equal(t, []int{1, 2, 3, 4}, firstValues)
 
 	snapshot := m.Snapshot()
 	m.Put("a", 5)
@@ -141,4 +145,27 @@ func TestConcurrentMultiMap_JSONCacheReturnsDefensiveCopy(t *testing.T) {
 
 	m.Put("a", 2)
 	require.Equal(t, `{"a":[1,2]}`, m.String())
+}
+
+func TestConcurrentMultiMap_ViewAllAndRangeLocked(t *testing.T) {
+	t.Parallel()
+
+	var m mapping.ConcurrentMultiMap[string, int]
+	m.PutAll("a", 1, 2)
+
+	seen := false
+	m.ViewAll(func(items map[string][]int) {
+		require.Equal(t, []int{1, 2}, items["a"])
+		seen = true
+	})
+	require.True(t, seen)
+
+	visited := 0
+	m.RangeLocked(func(key string, values []int) bool {
+		require.Equal(t, "a", key)
+		require.Equal(t, []int{1, 2}, values)
+		visited++
+		return true
+	})
+	require.Equal(t, 1, visited)
 }

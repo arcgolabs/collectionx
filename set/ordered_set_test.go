@@ -16,6 +16,12 @@ func TestOrderedSet_OrderAndDedupe(t *testing.T) {
 
 	require.Equal(t, []int{1, 2, 3}, s.Values())
 	require.True(t, s.Contains(2))
+	value, ok := s.GetFirst()
+	require.True(t, ok)
+	require.Equal(t, 1, value)
+	optionValue, ok := s.GetFirstOption().Get()
+	require.True(t, ok)
+	require.Equal(t, 1, optionValue)
 }
 
 func TestOrderedSet_RemoveReindex(t *testing.T) {

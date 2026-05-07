@@ -50,6 +50,23 @@ func (t *ConcurrentTable[R, C, V]) Get(rowKey R, columnKey C) (V, bool) {
 	return t.core.Get(rowKey, columnKey)
 }
 
+// GetFirst returns one cell from the table.
+// Iteration order is unspecified.
+func (t *ConcurrentTable[R, C, V]) GetFirst() (R, C, V, bool) {
+	var zeroR R
+	var zeroC C
+	var zeroV V
+	if t == nil {
+		return zeroR, zeroC, zeroV, false
+	}
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	if t.core == nil {
+		return zeroR, zeroC, zeroV, false
+	}
+	return t.core.GetFirst()
+}
+
 // GetOption returns value at (rowKey, columnKey) as mo.Option.
 func (t *ConcurrentTable[R, C, V]) GetOption(rowKey R, columnKey C) mo.Option[V] {
 	value, ok := t.Get(rowKey, columnKey)
@@ -267,6 +284,21 @@ func (t *ConcurrentTable[R, C, V]) All() map[R]map[C]V {
 	return t.core.All()
 }
 
+// ViewAll passes the internal table map to fn under a read lock without copying.
+// The map and row maps must be treated as read-only and must not be retained.
+func (t *ConcurrentTable[R, C, V]) ViewAll(fn func(rows map[R]map[C]V)) {
+	if t == nil || fn == nil {
+		return
+	}
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	if t.core == nil {
+		fn(nil)
+		return
+	}
+	t.core.ViewAll(fn)
+}
+
 // Snapshot returns an immutable-style copy in a normal Table.
 func (t *ConcurrentTable[R, C, V]) Snapshot() *Table[R, C, V] {
 	out := NewTable[R, C, V]()
@@ -288,6 +320,19 @@ func (t *ConcurrentTable[R, C, V]) Range(fn func(rowKey R, columnKey C, value V)
 			}
 		}
 	}
+}
+
+// RangeLocked iterates internal cells under a read lock without copying.
+func (t *ConcurrentTable[R, C, V]) RangeLocked(fn func(rowKey R, columnKey C, value V) bool) {
+	if t == nil || fn == nil {
+		return
+	}
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	if t.core == nil {
+		return
+	}
+	t.core.Range(fn)
 }
 
 func (t *ConcurrentTable[R, C, V]) ensureInitLocked() {

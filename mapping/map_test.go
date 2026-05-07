@@ -61,6 +61,21 @@ func TestMap_GetOption(t *testing.T) {
 	require.True(t, m.GetOption("missing").IsAbsent())
 }
 
+func TestMap_GetFirst(t *testing.T) {
+	t.Parallel()
+
+	m := mapping.NewMapFrom(map[string]int{"a": 1})
+	key, value, ok := m.GetFirst()
+	require.True(t, ok)
+	require.Equal(t, "a", key)
+	require.Equal(t, 1, value)
+
+	key, value, ok = mapping.NewMap[string, int]().GetFirst()
+	require.False(t, ok)
+	require.Zero(t, key)
+	require.Zero(t, value)
+}
+
 func TestMap_RangeStop(t *testing.T) {
 	t.Parallel()
 
@@ -173,4 +188,16 @@ func TestMap_JSONCacheReturnsDefensiveCopy(t *testing.T) {
 
 	m.Set("b", 2)
 	require.Contains(t, m.String(), `"b":2`)
+}
+
+func TestMap_ViewAll(t *testing.T) {
+	t.Parallel()
+
+	m := mapping.NewMapFrom(map[string]int{"a": 1})
+	seen := false
+	m.ViewAll(func(items map[string]int) {
+		require.Equal(t, 1, items["a"])
+		seen = true
+	})
+	require.True(t, seen)
 }

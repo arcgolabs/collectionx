@@ -21,6 +21,10 @@ func TestBiMap_BasicAndReplace(t *testing.T) {
 	key, ok := m.GetByValue(2)
 	require.True(t, ok)
 	require.Equal(t, "b", key)
+	firstKey, firstValue, ok := m.GetFirst()
+	require.True(t, ok)
+	require.Contains(t, []string{"a", "b"}, firstKey)
+	require.Contains(t, []int{1, 2}, firstValue)
 
 	// Replace by existing value: value=1 moves from key a to key c.
 	m.Put("c", 1)

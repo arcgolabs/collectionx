@@ -199,6 +199,24 @@ func (b *BitSet) Values() []int {
 	return out
 }
 
+// GetFirst returns the smallest set bit.
+func (b *BitSet) GetFirst() (int, bool) {
+	return b.NextSet(0)
+}
+
+// GetLast returns the largest set bit.
+func (b *BitSet) GetLast() (int, bool) {
+	if b == nil || b.count == 0 || len(b.words) == 0 {
+		return 0, false
+	}
+	wordIndex := len(b.words) - 1
+	word := b.words[wordIndex]
+	if word == 0 {
+		return 0, false
+	}
+	return wordIndex*64 + bits.Len64(word) - 1, true
+}
+
 // Range iterates set bits in ascending order until fn returns false.
 func (b *BitSet) Range(fn func(bit int) bool) {
 	if b == nil || fn == nil || b.count == 0 {
