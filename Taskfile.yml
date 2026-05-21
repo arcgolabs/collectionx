@@ -7,6 +7,7 @@ tasks:
     desc: Run the workspace test suite
     deps:
       - test:bitset
+      - test:bytex
       - test:disjointset
       - test:root
       - test:examples
@@ -20,6 +21,11 @@ tasks:
 
   test:bitset:
     dir: bitset
+    cmds:
+      - go test ./...
+
+  test:bytex:
+    dir: bytex
     cmds:
       - go test ./...
 
@@ -78,6 +84,7 @@ tasks:
       vars: [VERSION]
     cmds:
       - git tag bitset/v{{.VERSION}}
+      - git tag bytex/v{{.VERSION}}
       - git tag disjointset/v{{.VERSION}}
       - git tag examples/v{{.VERSION}}
       - git tag graph/v{{.VERSION}}
@@ -94,6 +101,7 @@ tasks:
       vars: [VERSION]
     cmds:
       - git push origin bitset/v{{.VERSION}}
+      - git push origin bytex/v{{.VERSION}}
       - git push origin disjointset/v{{.VERSION}}
       - git push origin examples/v{{.VERSION}}
       - git push origin graph/v{{.VERSION}}

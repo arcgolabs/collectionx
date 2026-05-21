@@ -11,6 +11,7 @@
 ## Package layout
 
 - `github.com/arcgolabs/collectionx/set` — `Set`, `ConcurrentSet`, `MultiSet`, `OrderedSet`
+- `github.com/arcgolabs/collectionx/bytex` — `List`, `RingBuffer`, `Set`, `Counter` for byte-specialized workloads
 - `github.com/arcgolabs/collectionx/mapping` — `Map`, `ConcurrentMap`, `BiMap`, `OrderedMap`, `MultiMap`, `Table`
 - `github.com/arcgolabs/collectionx/list` — `List`, `ConcurrentList`, `Deque`, `RingBuffer`, `PriorityQueue`
 - `github.com/arcgolabs/collectionx/interval` — `Range`, `RangeSet`, `RangeMap`
@@ -29,10 +30,11 @@
 
 ```bash
 go get github.com/arcgolabs/collectionx/set@latest
+go get github.com/arcgolabs/collectionx/bytex@latest
 go get github.com/arcgolabs/collectionx/mapping@latest
 ```
 
-Import the **subpackage** you need (for example `collectionx/set`, `collectionx/mapping`, `collectionx/list`).
+Import the **subpackage** you need (for example `collectionx/set`, `collectionx/bytex`, `collectionx/mapping`, `collectionx/list`).
 
 ## Why use collectionx
 
@@ -78,6 +80,7 @@ Notes:
 
 ```bash
 go test ./set -run ^$ -bench . -benchmem
+go test ./bytex -run ^$ -bench . -benchmem
 go test ./mapping -run ^$ -bench . -benchmem
 go test ./list -run ^$ -bench . -benchmem
 ```
@@ -95,6 +98,7 @@ go test ./prefix -run ^$ -bench Trie -benchmem
 - Prefer `OrderedMap` / `OrderedSet` when stable iteration order matters (tests, APIs, serialization).
 - Prefer `Trie` for large prefix searches instead of repeated linear scans over string keys.
 - Prefer `MultiSet` when frequency counts are the primary operation.
+- Prefer `bytex.Set` / `bytex.Counter` when the domain is byte-sized and fixed at 0-255.
 - Prefer `Tree` for parent/child models (org charts, categories, menus).
 
 ## FAQ

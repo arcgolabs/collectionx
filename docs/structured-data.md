@@ -7,7 +7,7 @@ weight: 4
 
 ## Lists and structured data
 
-Examples for **`collectionx/list`**, **`collectionx/interval`**, **`collectionx/prefix`**, and **`collectionx/tree`**. Each block is a complete `package main`.
+Examples for **`collectionx/list`**, **`collectionx/bytex`**, **`collectionx/interval`**, **`collectionx/prefix`**, and **`collectionx/tree`**. Each block is a complete `package main`.
 
 ## 1) `Deque` and `RingBuffer`
 
@@ -38,7 +38,44 @@ func main() {
 }
 ```
 
-## 2) Intervals: `RangeSet` and `RangeMap`
+## 2) Byte-specialized data: `bytex.List`, `RingBuffer`, `Set`, and `Counter`
+
+Use `bytex` when the data domain is bytes and you want byte-oriented helpers without giving up direct serializer support.
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/arcgolabs/collectionx/bytex"
+)
+
+func main() {
+	buf := bytex.NewListFromString("prefix-body")
+	drained, _ := buf.DrainPrefix(len("prefix-"))
+	fmt.Println(string(drained))
+	fmt.Println(buf.String())
+
+	tail := bytex.NewRingBuffer(4)
+	tail.WriteString("abcdef")
+	fmt.Println(tail.String())
+
+	seen := bytex.NewSet('a', 'b', 'a')
+	seen.AddRange('0', '9'+1)
+	fmt.Println(seen.Values())
+
+	counts := bytex.NewCounter()
+	counts.AddString("banana")
+	fmt.Println(counts.MostCommon(2))
+
+	data, _ := json.Marshal(buf)
+	fmt.Println(string(data))
+}
+```
+
+## 3) Intervals: `RangeSet` and `RangeMap`
 
 Half-open ranges `[start, end)` are normalized inside `RangeSet`. `RangeMap.Get` resolves a point to a value.
 
@@ -65,7 +102,7 @@ func main() {
 }
 ```
 
-## 3) Prefix map: `Trie`
+## 4) Prefix map: `Trie`
 
 ```go
 package main
@@ -86,7 +123,7 @@ func main() {
 }
 ```
 
-## 4) Hierarchy: `Tree`
+## 5) Hierarchy: `Tree`
 
 ```go
 package main
