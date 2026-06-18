@@ -6,7 +6,6 @@ import (
 	collectionlist "github.com/arcgolabs/collectionx/list"
 	collectionmapping "github.com/arcgolabs/collectionx/mapping"
 	"github.com/samber/mo"
-	"slices"
 )
 
 // OrderedSet keeps insertion order of unique items.
@@ -16,7 +15,7 @@ type OrderedSet[T comparable] struct {
 	items collectionmapping.Map[T, struct{}]
 	index collectionmapping.Map[T, int]
 
-	valuesCache []T
+	valuesCache *collectionlist.List[T]
 	valuesDirty bool
 	jsonCache   []byte
 	stringCache string
@@ -126,16 +125,11 @@ func (s *OrderedSet[T]) Values() []T {
 	if s == nil {
 		return nil
 	}
-	if !s.valuesDirty && len(s.valuesCache) > 0 {
-		return slices.Clone(s.valuesCache)
+	if s.valuesCache == nil || s.valuesDirty {
+		s.valuesCache = collectionlist.NewList(s.order.Values()...)
+		s.valuesDirty = false
 	}
-	values := s.order.Values()
-	if len(values) == 0 {
-		return nil
-	}
-	s.valuesCache = values
-	s.valuesDirty = false
-	return slices.Clone(values)
+	return s.valuesCache.Values()
 }
 
 // At returns item at insertion index.
