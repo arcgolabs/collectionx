@@ -112,25 +112,28 @@ func (g *Graph[K, V]) DeleteNode(id K) bool {
 
 	if g.directed {
 		g.edgeCount -= node.order.Len()
-		g.nodes.Range(func(otherID K, otherNode *graphNode[K, V]) bool {
-			if otherID == id {
-				return true
+		for i := 0; i < g.nodes.Len(); i++ {
+			otherID, otherNode, ok := g.nodes.At(i)
+			if !ok || otherID == id {
+				continue
 			}
 			if otherNode.deleteNeighbor(id) {
 				g.edgeCount--
 			}
-			return true
-		})
+		}
 	} else {
-		node.order.Range(func(_ int, neighborID K) bool {
+		for i := 0; i < node.order.Len(); i++ {
+			neighborID, ok := node.order.Get(i)
+			if !ok {
+				continue
+			}
 			if neighborID != id {
 				if otherNode, ok := g.nodes.Get(neighborID); ok {
 					otherNode.deleteNeighbor(id)
 				}
 			}
 			g.edgeCount--
-			return true
-		})
+		}
 	}
 
 	_ = g.nodes.Delete(id)
@@ -226,19 +229,28 @@ func (g *Graph[K, V]) Clone() *Graph[K, V] {
 		return NewUndirectedGraph[K, V]()
 	}
 	out := &Graph[K, V]{directed: g.directed}
-	g.nodes.Range(func(id K, node *graphNode[K, V]) bool {
+	for i := 0; i < g.nodes.Len(); i++ {
+		id, node, ok := g.nodes.At(i)
+		if !ok {
+			continue
+		}
 		out.AddNode(id, node.value)
-		return true
-	})
-	g.nodes.Range(func(from K, node *graphNode[K, V]) bool {
-		node.order.Range(func(_ int, to K) bool {
+	}
+	for i := 0; i < g.nodes.Len(); i++ {
+		from, node, ok := g.nodes.At(i)
+		if !ok {
+			continue
+		}
+		for j := 0; j < node.order.Len(); j++ {
+			to, ok := node.order.Get(j)
+			if !ok {
+				continue
+			}
 			if g.directed || from == to || !out.HasEdge(from, to) {
 				_ = out.AddEdge(from, to)
 			}
-			return true
-		})
-		return true
-	})
+		}
+	}
 	return out
 }
 
@@ -279,15 +291,21 @@ func (g *Graph[K, V]) InDegree(id K) int {
 		return 0
 	}
 	inDegree := 0
-	g.nodes.Range(func(_ K, node *graphNode[K, V]) bool {
-		node.order.Range(func(_ int, neighborID K) bool {
+	for i := 0; i < g.nodes.Len(); i++ {
+		_, node, ok := g.nodes.At(i)
+		if !ok {
+			continue
+		}
+		for j := 0; j < node.order.Len(); j++ {
+			neighborID, ok := node.order.Get(j)
+			if !ok {
+				continue
+			}
 			if neighborID == id {
 				inDegree++
 			}
-			return true
-		})
-		return true
-	})
+		}
+	}
 	return inDegree
 }
 
@@ -296,9 +314,15 @@ func (g *Graph[K, V]) RangeNodes(fn func(id K, value V) bool) {
 	if g == nil || fn == nil {
 		return
 	}
-	g.nodes.Range(func(id K, node *graphNode[K, V]) bool {
-		return fn(id, node.value)
-	})
+	for i := 0; i < g.nodes.Len(); i++ {
+		id, node, ok := g.nodes.At(i)
+		if !ok {
+			continue
+		}
+		if !fn(id, node.value) {
+			return
+		}
+	}
 }
 
 // RangeEdges iterates edges in insertion order until fn returns false.
@@ -307,38 +331,46 @@ func (g *Graph[K, V]) RangeEdges(fn func(from, to K) bool) {
 		return
 	}
 	if g.directed {
-		g.nodes.Range(func(from K, node *graphNode[K, V]) bool {
-			cont := true
-			node.order.Range(func(_ int, to K) bool {
-				if !fn(from, to) {
-					cont = false
-					return false
+		for i := 0; i < g.nodes.Len(); i++ {
+			from, node, ok := g.nodes.At(i)
+			if !ok {
+				continue
+			}
+			for j := 0; j < node.order.Len(); j++ {
+				to, ok := node.order.Get(j)
+				if !ok {
+					continue
 				}
-				return true
-			})
-			return cont
-		})
+				if !fn(from, to) {
+					return
+				}
+			}
+		}
 		return
 	}
 
 	emitted := make(map[EdgeSnapshot[K]]struct{}, g.edgeCount*2)
-	g.nodes.Range(func(from K, node *graphNode[K, V]) bool {
-		cont := true
-		node.order.Range(func(_ int, to K) bool {
+	for i := 0; i < g.nodes.Len(); i++ {
+		from, node, ok := g.nodes.At(i)
+		if !ok {
+			continue
+		}
+		for j := 0; j < node.order.Len(); j++ {
+			to, ok := node.order.Get(j)
+			if !ok {
+				continue
+			}
 			edge := EdgeSnapshot[K]{From: from, To: to}
 			if _, seen := emitted[edge]; seen {
-				return true
+				continue
 			}
 			if !fn(from, to) {
-				cont = false
-				return false
+				return
 			}
 			emitted[edge] = struct{}{}
 			emitted[EdgeSnapshot[K]{From: to, To: from}] = struct{}{}
-			return true
-		})
-		return cont
-	})
+		}
+	}
 }
 
 // PathExists reports whether to is reachable from from.
@@ -384,15 +416,18 @@ func (g *Graph[K, V]) BFS(start K, visit func(id K, value V) bool) {
 			g.queueScratch = queue[:0]
 			return
 		}
-		node.order.Range(func(_ int, neighborID K) bool {
+		for i := 0; i < node.order.Len(); i++ {
+			neighborID, ok := node.order.Get(i)
+			if !ok {
+				continue
+			}
 			neighbor, ok := g.nodes.Get(neighborID)
 			if !ok || neighbor.visitMark == mark {
-				return true
+				continue
 			}
 			neighbor.visitMark = mark
 			queue = append(queue, neighborID)
-			return true
-		})
+		}
 	}
 	g.queueScratch = queue[:0]
 }
@@ -452,26 +487,38 @@ func (g *Graph[K, V]) TopologicalSort() ([]K, error) {
 		g.indegreeScratch = *collectionmapping.NewMapWithCapacity[K, int](g.nodes.Len())
 	}
 
-	g.nodes.Range(func(id K, _ *graphNode[K, V]) bool {
+	for i := 0; i < g.nodes.Len(); i++ {
+		id, _, ok := g.nodes.At(i)
+		if !ok {
+			continue
+		}
 		g.indegreeScratch.Set(id, 0)
-		return true
-	})
-	g.nodes.Range(func(_ K, node *graphNode[K, V]) bool {
-		node.order.Range(func(_ int, neighborID K) bool {
+	}
+	for i := 0; i < g.nodes.Len(); i++ {
+		_, node, ok := g.nodes.At(i)
+		if !ok {
+			continue
+		}
+		for j := 0; j < node.order.Len(); j++ {
+			neighborID, ok := node.order.Get(j)
+			if !ok {
+				continue
+			}
 			count, _ := g.indegreeScratch.Get(neighborID)
 			g.indegreeScratch.Set(neighborID, count+1)
-			return true
-		})
-		return true
-	})
+		}
+	}
 
 	queue := g.queueScratch[:0]
-	g.nodes.Range(func(id K, _ *graphNode[K, V]) bool {
+	for i := 0; i < g.nodes.Len(); i++ {
+		id, _, ok := g.nodes.At(i)
+		if !ok {
+			continue
+		}
 		if count, ok := g.indegreeScratch.Get(id); ok && count == 0 {
 			queue = append(queue, id)
 		}
-		return true
-	})
+	}
 
 	order := g.orderScratch[:0]
 	for head := 0; head < len(queue); head++ {
@@ -481,18 +528,21 @@ func (g *Graph[K, V]) TopologicalSort() ([]K, error) {
 		if !ok {
 			continue
 		}
-		node.order.Range(func(_ int, neighborID K) bool {
+		for j := 0; j < node.order.Len(); j++ {
+			neighborID, ok := node.order.Get(j)
+			if !ok {
+				continue
+			}
 			count, ok := g.indegreeScratch.Get(neighborID)
 			if !ok {
-				return true
+				continue
 			}
 			next := count - 1
 			g.indegreeScratch.Set(neighborID, next)
 			if next == 0 {
 				queue = append(queue, neighborID)
 			}
-			return true
-		})
+		}
 	}
 
 	if len(order) != g.nodes.Len() {
@@ -547,10 +597,13 @@ func (g *Graph[K, V]) nextVisitEpoch() uint64 {
 	if g.visitEpoch != 0 {
 		return g.visitEpoch
 	}
-	g.nodes.Range(func(_ K, node *graphNode[K, V]) bool {
+	for i := 0; i < g.nodes.Len(); i++ {
+		_, node, ok := g.nodes.At(i)
+		if !ok {
+			continue
+		}
 		node.visitMark = 0
-		return true
-	})
+	}
 	g.visitEpoch = 1
 	return g.visitEpoch
 }
@@ -569,13 +622,16 @@ func (n *graphNode[K, V]) deleteNeighbor(id K) bool {
 		return false
 	}
 	index := -1
-	n.order.Range(func(i int, item K) bool {
-		if item != id {
-			return true
+	for i := 0; i < n.order.Len(); i++ {
+		item, ok := n.order.Get(i)
+		if !ok {
+			continue
 		}
-		index = i
-		return false
-	})
+		if item == id {
+			index = i
+			break
+		}
+	}
 	if index >= 0 {
 		_, _ = n.order.RemoveAt(index)
 	}
