@@ -2,8 +2,9 @@ package interval
 
 import (
 	"cmp"
-	"slices"
 	"sort"
+
+	collectionlist "github.com/arcgolabs/collectionx/list"
 )
 
 // RangeSet is a normalized set of half-open ranges [start, end).
@@ -11,7 +12,7 @@ import (
 type RangeSet[T cmp.Ordered] struct {
 	ranges []Range[T]
 
-	rangesCache []Range[T]
+	rangesCache *collectionlist.List[Range[T]]
 	rangesDirty bool
 	jsonCache   []byte
 	stringCache string
@@ -130,12 +131,12 @@ func (s *RangeSet[T]) Ranges() []Range[T] {
 	if s == nil || len(s.ranges) == 0 {
 		return nil
 	}
-	if !s.rangesDirty && len(s.rangesCache) > 0 {
-		return slices.Clone(s.rangesCache)
+	if !s.rangesDirty && s.rangesCache != nil && !s.rangesCache.IsEmpty() {
+		return s.rangesCache.Values()
 	}
-	s.rangesCache = slices.Clone(s.ranges)
+	s.rangesCache = collectionlist.NewList(s.ranges...)
 	s.rangesDirty = false
-	return slices.Clone(s.rangesCache)
+	return s.rangesCache.Values()
 }
 
 // GetFirst returns the first normalized range by start.

@@ -2,8 +2,9 @@ package interval
 
 import (
 	"cmp"
-	"slices"
 	"sort"
+
+	collectionlist "github.com/arcgolabs/collectionx/list"
 
 	"github.com/samber/mo"
 )
@@ -20,7 +21,7 @@ type RangeEntry[T cmp.Ordered, V any] struct {
 type RangeMap[T cmp.Ordered, V any] struct {
 	entries []RangeEntry[T, V]
 
-	entriesCache []RangeEntry[T, V]
+	entriesCache *collectionlist.List[RangeEntry[T, V]]
 	entriesDirty bool
 	jsonCache    []byte
 	stringCache  string
@@ -147,12 +148,12 @@ func (m *RangeMap[T, V]) Entries() []RangeEntry[T, V] {
 	if m == nil || len(m.entries) == 0 {
 		return nil
 	}
-	if !m.entriesDirty && len(m.entriesCache) > 0 {
-		return slices.Clone(m.entriesCache)
+	if !m.entriesDirty && m.entriesCache != nil && !m.entriesCache.IsEmpty() {
+		return m.entriesCache.Values()
 	}
-	m.entriesCache = slices.Clone(m.entries)
+	m.entriesCache = collectionlist.NewList(m.entries...)
 	m.entriesDirty = false
-	return slices.Clone(m.entriesCache)
+	return m.entriesCache.Values()
 }
 
 // GetFirst returns the first entry by range start.
