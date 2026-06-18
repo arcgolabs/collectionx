@@ -10,10 +10,16 @@ func walkPrefix[V any](node *trieNode[V], prefix string, visit func(path []rune,
 		return true
 	}
 
-	prefixRunes := []rune(prefix)
-	path := make([]rune, 0, len(prefixRunes)+32)
-	path = append(path, prefixRunes...)
-	stack := make([]trieWalkFrame[V], 1, 32)
+	const walkPathInlineCap = 64
+	const walkStackInlineCap = 64
+	var pathInline [walkPathInlineCap]rune
+	var stackInline [walkStackInlineCap]trieWalkFrame[V]
+
+	path := pathInline[:0]
+	for _, ch := range prefix {
+		path = append(path, ch)
+	}
+	stack := stackInline[:1]
 	stack[0] = trieWalkFrame[V]{node: node, childIndex: -1}
 	for len(stack) > 0 {
 		frame := &stack[len(stack)-1]
@@ -46,7 +52,9 @@ func walkPrefixValues[V any](node *trieNode[V], visit func(node *trieNode[V]) bo
 		return true
 	}
 
-	stack := make([]*trieNode[V], 1, 32)
+	const walkStackValuesInlineCap = 64
+	var stackInline [walkStackValuesInlineCap]*trieNode[V]
+	stack := stackInline[:1]
 	stack[0] = node
 	for len(stack) > 0 {
 		current := stack[len(stack)-1]
