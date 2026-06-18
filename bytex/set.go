@@ -220,6 +220,21 @@ func (s *Set) Range(fn func(value byte) bool) {
 	}
 }
 
+// Foreach invokes fn for every value and returns the receiver for chaining.
+func (s *Set) Foreach(fn func(value byte)) *Set {
+	if s == nil {
+		return s
+	}
+	if fn == nil {
+		return s
+	}
+	s.Range(func(value byte) bool {
+		fn(value)
+		return true
+	})
+	return s
+}
+
 // Union returns a new set containing values from both sets.
 func (s *Set) Union(other *Set) *Set {
 	out := &Set{}

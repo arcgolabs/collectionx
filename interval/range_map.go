@@ -211,6 +211,21 @@ func (m *RangeMap[T, V]) Range(fn func(entry RangeEntry[T, V]) bool) {
 	}
 }
 
+// Foreach invokes fn for every entry and returns the receiver for chaining.
+func (m *RangeMap[T, V]) Foreach(fn func(entry RangeEntry[T, V])) *RangeMap[T, V] {
+	if m == nil {
+		return m
+	}
+	if fn == nil {
+		return m
+	}
+	m.Range(func(entry RangeEntry[T, V]) bool {
+		fn(entry)
+		return true
+	})
+	return m
+}
+
 func newRangeEntry[T cmp.Ordered, V any](start, end T, value V) (RangeEntry[T, V], bool) {
 	input := Range[T]{Start: start, End: end}
 	if !input.IsValid() {

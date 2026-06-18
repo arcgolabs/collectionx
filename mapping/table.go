@@ -339,6 +339,21 @@ func (t *Table[R, C, V]) Range(fn func(rowKey R, columnKey C, value V) bool) {
 	})
 }
 
+// Foreach invokes fn for every cell and returns the receiver for chaining.
+func (t *Table[R, C, V]) Foreach(fn func(rowKey R, columnKey C, value V)) *Table[R, C, V] {
+	if t == nil {
+		return t
+	}
+	if fn == nil {
+		return t
+	}
+	t.Range(func(rowKey R, columnKey C, value V) bool {
+		fn(rowKey, columnKey, value)
+		return true
+	})
+	return t
+}
+
 func (t *Table[R, C, V]) ensureInit() {
 	t.data.ensureInit()
 }

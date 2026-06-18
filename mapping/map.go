@@ -228,6 +228,21 @@ func (m *Map[K, V]) Range(fn func(key K, value V) bool) {
 	}
 }
 
+// Foreach invokes fn for each key-value pair and returns the receiver for chaining.
+func (m *Map[K, V]) Foreach(fn func(key K, value V)) *Map[K, V] {
+	if m == nil {
+		return m
+	}
+	if fn == nil {
+		return m
+	}
+	m.Range(func(key K, value V) bool {
+		fn(key, value)
+		return true
+	})
+	return m
+}
+
 // Clone returns a shallow copy.
 func (m *Map[K, V]) Clone() *Map[K, V] {
 	if m == nil || len(m.items) == 0 {

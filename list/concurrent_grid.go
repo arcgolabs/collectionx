@@ -220,6 +220,21 @@ func (g *ConcurrentGrid[T]) Range(fn func(index int, row []T) bool) {
 	g.Snapshot().Range(fn)
 }
 
+// Foreach invokes fn for each row and returns the receiver for chaining.
+func (g *ConcurrentGrid[T]) Foreach(fn func(index int, row []T)) *ConcurrentGrid[T] {
+	if g == nil {
+		return g
+	}
+	if fn == nil {
+		return g
+	}
+	g.Range(func(index int, row []T) bool {
+		fn(index, row)
+		return true
+	})
+	return g
+}
+
 // RangeLocked iterates internal rows under a read lock without copying.
 // Row slices must be treated as read-only and must not be retained.
 func (g *ConcurrentGrid[T]) RangeLocked(fn func(index int, row []T) bool) {

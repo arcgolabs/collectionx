@@ -173,6 +173,21 @@ func (d *ConcurrentDeque[T]) Range(fn func(index int, item T) bool) {
 	d.deque.Range(fn)
 }
 
+// Foreach invokes fn for every item in a stable snapshot and returns the receiver for chaining.
+func (d *ConcurrentDeque[T]) Foreach(fn func(index int, item T)) *ConcurrentDeque[T] {
+	if d == nil {
+		return d
+	}
+	if fn == nil {
+		return d
+	}
+	d.Range(func(index int, item T) bool {
+		fn(index, item)
+		return true
+	})
+	return d
+}
+
 // Snapshot returns an immutable-style copy in a normal Deque.
 func (d *ConcurrentDeque[T]) Snapshot() *Deque[T] {
 	out := NewDeque[T]()

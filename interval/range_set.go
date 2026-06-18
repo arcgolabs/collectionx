@@ -194,6 +194,21 @@ func (s *RangeSet[T]) Range(fn func(r Range[T]) bool) {
 	}
 }
 
+// Foreach invokes fn for every range and returns the receiver for chaining.
+func (s *RangeSet[T]) Foreach(fn func(r Range[T])) *RangeSet[T] {
+	if s == nil {
+		return s
+	}
+	if fn == nil {
+		return s
+	}
+	s.Range(func(r Range[T]) bool {
+		fn(r)
+		return true
+	})
+	return s
+}
+
 func addRangeToSet[T cmp.Ordered](ranges []Range[T], input Range[T]) []Range[T] {
 	if len(ranges) == 0 {
 		return append(ranges, input)

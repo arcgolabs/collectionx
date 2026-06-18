@@ -263,6 +263,21 @@ func (m *MultiMap[K, V]) Range(fn func(key K, values []V) bool) {
 	})
 }
 
+// Foreach invokes fn for each key and value slice and returns the receiver for chaining.
+func (m *MultiMap[K, V]) Foreach(fn func(key K, values []V)) *MultiMap[K, V] {
+	if m == nil {
+		return m
+	}
+	if fn == nil {
+		return m
+	}
+	m.Range(func(key K, values []V) bool {
+		fn(key, values)
+		return true
+	})
+	return m
+}
+
 // RangeView iterates internal value slices without copying.
 // Value slices must be treated as read-only and must not be retained.
 func (m *MultiMap[K, V]) RangeView(fn func(key K, values []V) bool) {

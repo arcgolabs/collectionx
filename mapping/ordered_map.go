@@ -210,6 +210,21 @@ func (m *OrderedMap[K, V]) Range(fn func(key K, value V) bool) {
 	})
 }
 
+// Foreach invokes fn for each key-value pair in insertion order and returns the receiver for chaining.
+func (m *OrderedMap[K, V]) Foreach(fn func(key K, value V)) *OrderedMap[K, V] {
+	if m == nil {
+		return m
+	}
+	if fn == nil {
+		return m
+	}
+	m.Range(func(key K, value V) bool {
+		fn(key, value)
+		return true
+	})
+	return m
+}
+
 // Clone returns a shallow copy.
 func (m *OrderedMap[K, V]) Clone() *OrderedMap[K, V] {
 	if m == nil {

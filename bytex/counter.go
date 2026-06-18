@@ -306,6 +306,21 @@ func (c *Counter) Range(fn func(value byte, count int) bool) {
 	}
 }
 
+// Foreach invokes fn for every byte/count pair and returns the receiver for chaining.
+func (c *Counter) Foreach(fn func(value byte, count int)) *Counter {
+	if c == nil {
+		return c
+	}
+	if fn == nil {
+		return c
+	}
+	c.Range(func(value byte, count int) bool {
+		fn(value, count)
+		return true
+	})
+	return c
+}
+
 func (c *Counter) addBulkBytes(values []byte) {
 	var counts [256]int
 	for _, value := range values {

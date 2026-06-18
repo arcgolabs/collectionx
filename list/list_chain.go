@@ -69,6 +69,11 @@ func (l *List[T]) Each(fn func(index int, item T)) *List[T] {
 	return l
 }
 
+// Foreach invokes fn for every item and returns the receiver for chaining.
+func (l *List[T]) Foreach(fn func(index int, item T)) *List[T] {
+	return l.Each(fn)
+}
+
 // FirstWhere returns the first item matching predicate.
 func (l *List[T]) FirstWhere(predicate func(index int, item T) bool) mo.Option[T] {
 	if l == nil || predicate == nil || len(l.items) == 0 {

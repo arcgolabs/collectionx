@@ -160,3 +160,18 @@ func (s *MultiSet[T]) Range(fn func(item T, count int) bool) {
 	}
 	s.counts.Range(fn)
 }
+
+// Foreach invokes fn for every item/count pair and returns the receiver for chaining.
+func (s *MultiSet[T]) Foreach(fn func(item T, count int)) *MultiSet[T] {
+	if s == nil {
+		return s
+	}
+	if fn == nil {
+		return s
+	}
+	s.Range(func(item T, count int) bool {
+		fn(item, count)
+		return true
+	})
+	return s
+}

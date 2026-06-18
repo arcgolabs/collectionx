@@ -171,6 +171,21 @@ func (d *Deque[T]) Range(fn func(index int, item T) bool) {
 	}
 }
 
+// Foreach invokes fn for every item and returns the receiver for chaining.
+func (d *Deque[T]) Foreach(fn func(index int, item T)) *Deque[T] {
+	if d == nil {
+		return d
+	}
+	if fn == nil {
+		return d
+	}
+	d.Range(func(index int, item T) bool {
+		fn(index, item)
+		return true
+	})
+	return d
+}
+
 func (d *Deque[T]) pushFrontOne(item T) {
 	d.ensureCapacity(1)
 	if d.size == 0 {

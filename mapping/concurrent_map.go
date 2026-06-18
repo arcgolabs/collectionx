@@ -291,6 +291,21 @@ func (m *ConcurrentMap[K, V]) Range(fn func(key K, value V) bool) {
 	}
 }
 
+// Foreach invokes fn for every entry and returns the receiver for chaining.
+func (m *ConcurrentMap[K, V]) Foreach(fn func(key K, value V)) *ConcurrentMap[K, V] {
+	if m == nil {
+		return m
+	}
+	if fn == nil {
+		return m
+	}
+	m.Range(func(key K, value V) bool {
+		fn(key, value)
+		return true
+	})
+	return m
+}
+
 // RangeLocked iterates internal entries under a read lock without copying.
 func (m *ConcurrentMap[K, V]) RangeLocked(fn func(key K, value V) bool) {
 	if m == nil || fn == nil {

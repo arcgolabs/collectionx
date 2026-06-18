@@ -334,6 +334,21 @@ func (l *List) Range(fn func(index int, value byte) bool) {
 	}
 }
 
+// Foreach invokes fn for every value and returns the receiver for chaining.
+func (l *List) Foreach(fn func(index int, value byte)) *List {
+	if l == nil {
+		return l
+	}
+	if fn == nil {
+		return l
+	}
+	l.Range(func(index int, value byte) bool {
+		fn(index, value)
+		return true
+	})
+	return l
+}
+
 // Clone returns a copy of the list.
 func (l *List) Clone() *List {
 	if l == nil {

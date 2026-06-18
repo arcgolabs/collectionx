@@ -234,6 +234,21 @@ func (b *BitSet) Range(fn func(bit int) bool) {
 	}
 }
 
+// Foreach invokes fn for every bit and returns the receiver for chaining.
+func (b *BitSet) Foreach(fn func(bit int)) *BitSet {
+	if b == nil {
+		return b
+	}
+	if fn == nil {
+		return b
+	}
+	b.Range(func(bit int) bool {
+		fn(bit)
+		return true
+	})
+	return b
+}
+
 // NextSet returns the next set bit at or after bit.
 func (b *BitSet) NextSet(bit int) (int, bool) {
 	if b == nil || bit < 0 || len(b.words) == 0 {

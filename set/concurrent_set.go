@@ -243,6 +243,11 @@ func (s *ConcurrentSet[T]) Each(fn func(item T)) *Set[T] {
 	return s.Snapshot().Each(fn)
 }
 
+// Foreach iterates items in a stable snapshot and returns the receiver for chaining.
+func (s *ConcurrentSet[T]) Foreach(fn func(item T)) *Set[T] {
+	return s.Snapshot().Foreach(fn)
+}
+
 // FirstWhere returns the first item matching predicate from a stable snapshot.
 func (s *ConcurrentSet[T]) FirstWhere(predicate func(item T) bool) mo.Option[T] {
 	return s.Snapshot().FirstWhere(predicate)

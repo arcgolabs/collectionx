@@ -292,6 +292,11 @@ func (l *ConcurrentList[T]) Each(fn func(index int, item T)) *List[T] {
 	return l.Snapshot().Each(fn)
 }
 
+// Foreach iterates items in a stable snapshot and returns it for chaining.
+func (l *ConcurrentList[T]) Foreach(fn func(index int, item T)) *List[T] {
+	return l.Snapshot().Foreach(fn)
+}
+
 // FirstWhere returns the first item matching predicate from a stable snapshot.
 func (l *ConcurrentList[T]) FirstWhere(predicate func(index int, item T) bool) mo.Option[T] {
 	return l.Snapshot().FirstWhere(predicate)

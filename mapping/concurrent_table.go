@@ -322,6 +322,21 @@ func (t *ConcurrentTable[R, C, V]) Range(fn func(rowKey R, columnKey C, value V)
 	}
 }
 
+// Foreach invokes fn for every cell and returns the receiver for chaining.
+func (t *ConcurrentTable[R, C, V]) Foreach(fn func(rowKey R, columnKey C, value V)) *ConcurrentTable[R, C, V] {
+	if t == nil {
+		return t
+	}
+	if fn == nil {
+		return t
+	}
+	t.Range(func(rowKey R, columnKey C, value V) bool {
+		fn(rowKey, columnKey, value)
+		return true
+	})
+	return t
+}
+
 // RangeLocked iterates internal cells under a read lock without copying.
 func (t *ConcurrentTable[R, C, V]) RangeLocked(fn func(rowKey R, columnKey C, value V) bool) {
 	if t == nil || fn == nil {

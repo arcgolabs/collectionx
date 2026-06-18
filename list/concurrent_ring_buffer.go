@@ -160,6 +160,21 @@ func (r *ConcurrentRingBuffer[T]) Range(fn func(index int, item T) bool) {
 	}
 }
 
+// Foreach invokes fn for every item and returns the receiver for chaining.
+func (r *ConcurrentRingBuffer[T]) Foreach(fn func(index int, item T)) *ConcurrentRingBuffer[T] {
+	if r == nil {
+		return r
+	}
+	if fn == nil {
+		return r
+	}
+	r.Range(func(index int, item T) bool {
+		fn(index, item)
+		return true
+	})
+	return r
+}
+
 // Snapshot returns an immutable-style copy in a normal RingBuffer.
 func (r *ConcurrentRingBuffer[T]) Snapshot() *RingBuffer[T] {
 	out := NewRingBuffer[T](0)

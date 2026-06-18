@@ -287,6 +287,11 @@ func (s *OrderedSet[T]) Each(fn func(item T)) *OrderedSet[T] {
 	return s
 }
 
+// Foreach invokes fn for every item and returns the receiver for chaining.
+func (s *OrderedSet[T]) Foreach(fn func(item T)) *OrderedSet[T] {
+	return s.Each(fn)
+}
+
 // FirstWhere returns the first item matching predicate.
 func (s *OrderedSet[T]) FirstWhere(predicate func(item T) bool) mo.Option[T] {
 	if s == nil || predicate == nil || s.order.Len() == 0 {

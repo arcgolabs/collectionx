@@ -323,6 +323,21 @@ func (m *ConcurrentMultiMap[K, V]) Range(fn func(key K, values []V) bool) {
 	}
 }
 
+// Foreach invokes fn for every key and value slice in stable order and returns the receiver for chaining.
+func (m *ConcurrentMultiMap[K, V]) Foreach(fn func(key K, values []V)) *ConcurrentMultiMap[K, V] {
+	if m == nil {
+		return m
+	}
+	if fn == nil {
+		return m
+	}
+	m.Range(func(key K, values []V) bool {
+		fn(key, values)
+		return true
+	})
+	return m
+}
+
 // RangeLocked iterates internal value slices under a read lock without copying.
 // Value slices must be treated as read-only and must not be retained.
 func (m *ConcurrentMultiMap[K, V]) RangeLocked(fn func(key K, values []V) bool) {

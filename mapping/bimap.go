@@ -187,6 +187,21 @@ func (m *BiMap[K, V]) Range(fn func(key K, value V) bool) {
 	m.kv.Range(fn)
 }
 
+// Foreach invokes fn for every key-value pair and returns the receiver for chaining.
+func (m *BiMap[K, V]) Foreach(fn func(key K, value V)) *BiMap[K, V] {
+	if m == nil {
+		return m
+	}
+	if fn == nil {
+		return m
+	}
+	m.Range(func(key K, value V) bool {
+		fn(key, value)
+		return true
+	})
+	return m
+}
+
 func (m *BiMap[K, V]) ensureInit() {
 	m.kv.ensureInit()
 	m.vk.ensureInit()

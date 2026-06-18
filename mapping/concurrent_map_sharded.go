@@ -324,6 +324,21 @@ func (m *ShardedConcurrentMap[K, V]) Range(fn func(key K, value V) bool) {
 	}
 }
 
+// Foreach invokes fn for every entry and returns the receiver for chaining.
+func (m *ShardedConcurrentMap[K, V]) Foreach(fn func(key K, value V)) *ShardedConcurrentMap[K, V] {
+	if m == nil {
+		return m
+	}
+	if fn == nil {
+		return m
+	}
+	m.Range(func(key K, value V) bool {
+		fn(key, value)
+		return true
+	})
+	return m
+}
+
 // RangeLocked iterates internal shard maps under read locks without copying.
 func (m *ShardedConcurrentMap[K, V]) RangeLocked(fn func(key K, value V) bool) {
 	if m == nil || fn == nil {

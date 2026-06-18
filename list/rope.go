@@ -235,6 +235,21 @@ func (r *RopeList[T]) Range(fn func(index int, item T) bool) {
 	r.root.rangeItems(&index, fn)
 }
 
+// Foreach invokes fn for every item and returns the receiver for chaining.
+func (r *RopeList[T]) Foreach(fn func(index int, item T)) *RopeList[T] {
+	if r == nil {
+		return r
+	}
+	if fn == nil {
+		return r
+	}
+	r.Range(func(index int, item T) bool {
+		fn(index, item)
+		return true
+	})
+	return r
+}
+
 // Clone returns a shallow copy.
 func (r *RopeList[T]) Clone() *RopeList[T] {
 	if r == nil || r.root == nil {

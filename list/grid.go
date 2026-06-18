@@ -228,6 +228,21 @@ func (g *Grid[T]) Range(fn func(index int, row []T) bool) {
 	})
 }
 
+// Foreach invokes fn for every row and returns the receiver for chaining.
+func (g *Grid[T]) Foreach(fn func(index int, row []T)) *Grid[T] {
+	if g == nil {
+		return g
+	}
+	if fn == nil {
+		return g
+	}
+	g.Range(func(index int, row []T) bool {
+		fn(index, row)
+		return true
+	})
+	return g
+}
+
 // Clone returns a deep copy.
 func (g *Grid[T]) Clone() *Grid[T] {
 	if g == nil || g.rows.Len() == 0 {
