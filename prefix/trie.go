@@ -203,26 +203,19 @@ func (t *Trie[V]) Delete(key string) bool {
 		return true
 	}
 
-	const stackInlineCap = 64
-	var nodeInline [stackInlineCap + 1]*trieNode[V]
-	var runeInline [stackInlineCap]rune
-	pathNodes := nodeInline[:1]
-	pathNodes[0] = t.root
-	pathRunes := runeInline[:0]
+	runes := []rune(key)
+	pathNodes := make([]*trieNode[V], 0, len(runes)+1)
+	pathRunes := make([]rune, 0, len(runes))
+	pathNodes = append(pathNodes, t.root)
 
 	node := t.root
-	for _, ch := range key {
+	for _, ch := range runes {
 		child, ok := node.children.Get(ch)
 		if !ok {
 			return false
 		}
-		if len(pathRunes) < cap(pathRunes) {
-			pathRunes = append(pathRunes, ch)
-			pathNodes = append(pathNodes, child)
-		} else {
-			pathRunes = append(slices.Clone(pathRunes), ch)
-			pathNodes = append(slices.Clone(pathNodes), child)
-		}
+		pathRunes = append(pathRunes, ch)
+		pathNodes = append(pathNodes, child)
 		node = child
 	}
 	if !node.hasValue {

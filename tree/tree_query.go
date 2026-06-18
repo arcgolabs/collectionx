@@ -1,5 +1,7 @@
 package tree
 
+import collectionlist "github.com/arcgolabs/collectionx/list"
+
 // Get returns node by id.
 func (t *Tree[K, V]) Get(id K) (*Node[K, V], bool) {
 	if t == nil || t.nodes == nil {
@@ -47,17 +49,12 @@ func (t *Tree[K, V]) Ancestors(id K) []*Node[K, V] {
 		return nil
 	}
 
-	depth := 0
-	for current := node.parent; current != nil; current = current.parent {
-		depth++
-	}
-	if depth == 0 {
-		return nil
-	}
-
-	ancestors := make([]*Node[K, V], 0, depth)
+	ancestors := make([]*Node[K, V], 0)
 	for current := node.parent; current != nil; current = current.parent {
 		ancestors = append(ancestors, current)
+	}
+	if len(ancestors) == 0 {
+		return nil
 	}
 	return ancestors
 }
@@ -83,19 +80,37 @@ func (t *Tree[K, V]) Siblings(id K) []*Node[K, V] {
 		return nil
 	}
 
-	var source []*Node[K, V]
 	if node.parent == nil {
-		source = t.Roots()
-	} else {
-		source = node.parent.Children()
+		if t.roots == nil {
+			return nil
+		}
+
+		rootCount := t.roots.Len()
+		if rootCount <= 1 {
+			return nil
+		}
+
+		siblings := make([]*Node[K, V], 0, rootCount-1)
+		for i := range rootCount {
+			candidate, _ := t.roots.Get(i)
+			if candidate != node {
+				siblings = append(siblings, candidate)
+			}
+		}
+		if len(siblings) == 0 {
+			return nil
+		}
+		return siblings
 	}
 
-	if len(source) <= 1 {
+	childCount := node.parent.children.Len()
+	if childCount <= 1 {
 		return nil
 	}
 
-	siblings := make([]*Node[K, V], 0, len(source)-1)
-	for _, candidate := range source {
+	siblings := make([]*Node[K, V], 0, childCount-1)
+	for i := range childCount {
+		candidate, _ := node.parent.children.Get(i)
 		if candidate != node {
 			siblings = append(siblings, candidate)
 		}
@@ -140,7 +155,7 @@ func (t *Tree[K, V]) Leaves() []*Node[K, V] {
 	if t == nil {
 		return nil
 	}
-	return collectLeaves(t.Roots())
+	return collectLeavesFromList(t.roots)
 }
 
 // RangeDFS iterates all nodes in DFS pre-order until fn returns false.
@@ -149,7 +164,16 @@ func (t *Tree[K, V]) RangeDFS(fn func(node *Node[K, V]) bool) {
 		return
 	}
 
-	rangeDFSRoots(t.Roots(), fn)
+	if t.roots == nil || t.roots.Len() == 0 {
+		return
+	}
+
+	for i := range t.roots.Len() {
+		root, _ := t.roots.Get(i)
+		if !rangeDFSFromRoot(root, fn) {
+			return
+		}
+	}
 }
 
 // RangeBFS iterates all nodes in BFS order until fn returns false.
@@ -158,7 +182,11 @@ func (t *Tree[K, V]) RangeBFS(fn func(node *Node[K, V]) bool) {
 		return
 	}
 
-	rangeBFSRoots(t.Roots(), fn)
+	if t.roots == nil || t.roots.Len() == 0 {
+		return
+	}
+
+	rangeBFSFromRoots(t.roots, fn)
 }
 
 // Len returns total node count.
@@ -172,14 +200,6 @@ func (t *Tree[K, V]) Len() int {
 // IsEmpty reports whether tree has no nodes.
 func (t *Tree[K, V]) IsEmpty() bool {
 	return t.Len() == 0
-}
-
-func rangeDFSRoots[K comparable, V any](roots []*Node[K, V], fn func(node *Node[K, V]) bool) {
-	for _, root := range roots {
-		if !rangeDFSFromRoot(root, fn) {
-			return
-		}
-	}
 }
 
 func rangeDFSFromRoot[K comparable, V any](root *Node[K, V], fn func(node *Node[K, V]) bool) bool {
@@ -201,12 +221,16 @@ func rangeDFSFromRoot[K comparable, V any](root *Node[K, V], fn func(node *Node[
 	return true
 }
 
-func rangeBFSRoots[K comparable, V any](roots []*Node[K, V], fn func(node *Node[K, V]) bool) {
-	if len(roots) == 0 {
+func rangeBFSFromRoots[K comparable, V any](roots *collectionlist.List[*Node[K, V]], fn func(node *Node[K, V]) bool) {
+	if roots == nil || roots.Len() == 0 {
 		return
 	}
 
-	queue := append(make([]*Node[K, V], 0, len(roots)), roots...)
+	queue := make([]*Node[K, V], 0, roots.Len())
+	for i := range roots.Len() {
+		root, _ := roots.Get(i)
+		queue = append(queue, root)
+	}
 	for head := 0; head < len(queue); head++ {
 		current := queue[head]
 		if !fn(current) {
@@ -240,14 +264,65 @@ func collectLeaves[K comparable, V any](roots []*Node[K, V]) []*Node[K, V] {
 	}
 
 	leaves := make([]*Node[K, V], 0, len(roots))
-	rangeDFSRoots(roots, func(node *Node[K, V]) bool {
-		if node.children.Len() == 0 {
-			leaves = append(leaves, node)
-		}
-		return true
-	})
+	for _, root := range roots {
+		_ = rangeDFSFromRoot(root, func(node *Node[K, V]) bool {
+			if node.children.Len() == 0 {
+				leaves = append(leaves, node)
+			}
+			return true
+		})
+	}
 	if len(leaves) == 0 {
 		return nil
 	}
 	return leaves
+}
+
+func collectLeavesFromList[K comparable, V any](roots *collectionlist.List[*Node[K, V]]) []*Node[K, V] {
+	if roots == nil || roots.Len() == 0 {
+		return nil
+	}
+
+	leaves := make([]*Node[K, V], 0, roots.Len())
+	for i := range roots.Len() {
+		root, _ := roots.Get(i)
+		_ = rangeDFSFromRoot(root, func(node *Node[K, V]) bool {
+			if node.children.Len() == 0 {
+				leaves = append(leaves, node)
+			}
+			return true
+		})
+	}
+	if len(leaves) == 0 {
+		return nil
+	}
+	return leaves
+}
+
+func rangeDFSRoots[K comparable, V any](roots []*Node[K, V], fn func(node *Node[K, V]) bool) {
+	for _, root := range roots {
+		if !rangeDFSFromRoot(root, fn) {
+			return
+		}
+	}
+}
+
+func rangeBFSRoots[K comparable, V any](roots []*Node[K, V], fn func(node *Node[K, V]) bool) {
+	if len(roots) == 0 {
+		return
+	}
+
+	queue := append(make([]*Node[K, V], 0, len(roots)), roots...)
+	for head := 0; head < len(queue); head++ {
+		current := queue[head]
+		if !fn(current) {
+			return
+		}
+
+		childCount := current.children.Len()
+		for i := range childCount {
+			child, _ := current.children.Get(i)
+			queue = append(queue, child)
+		}
+	}
 }
