@@ -21,15 +21,15 @@ type Snapshot[K comparable, V any] struct {
 
 // Nodes returns detached nodes in insertion order.
 func (g *Graph[K, V]) Nodes() []NodeSnapshot[K, V] {
-	if g == nil || len(g.nodes) == 0 {
+	if g == nil || g.nodes.Len() == 0 {
 		return nil
 	}
 
-	nodes := make([]NodeSnapshot[K, V], 0, len(g.order))
-	for _, id := range g.order {
-		node := g.nodes[id]
+	nodes := make([]NodeSnapshot[K, V], 0, g.nodes.Len())
+	g.nodes.Range(func(id K, node *graphNode[K, V]) bool {
 		nodes = append(nodes, NodeSnapshot[K, V]{ID: id, Value: node.value})
-	}
+		return true
+	})
 	return nodes
 }
 
