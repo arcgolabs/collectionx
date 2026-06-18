@@ -131,11 +131,10 @@ func (s *RangeSet[T]) Ranges() []Range[T] {
 	if s == nil || len(s.ranges) == 0 {
 		return nil
 	}
-	if !s.rangesDirty && s.rangesCache != nil && !s.rangesCache.IsEmpty() {
-		return s.rangesCache.Values()
+	if s.rangesCache == nil || s.rangesDirty {
+		s.rangesCache = collectionlist.NewList(s.ranges...)
+		s.rangesDirty = false
 	}
-	s.rangesCache = collectionlist.NewList(s.ranges...)
-	s.rangesDirty = false
 	return s.rangesCache.Values()
 }
 

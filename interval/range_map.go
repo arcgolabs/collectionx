@@ -148,11 +148,10 @@ func (m *RangeMap[T, V]) Entries() []RangeEntry[T, V] {
 	if m == nil || len(m.entries) == 0 {
 		return nil
 	}
-	if !m.entriesDirty && m.entriesCache != nil && !m.entriesCache.IsEmpty() {
-		return m.entriesCache.Values()
+	if m.entriesCache == nil || m.entriesDirty {
+		m.entriesCache = collectionlist.NewList(m.entries...)
+		m.entriesDirty = false
 	}
-	m.entriesCache = collectionlist.NewList(m.entries...)
-	m.entriesDirty = false
 	return m.entriesCache.Values()
 }
 
